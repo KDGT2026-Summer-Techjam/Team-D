@@ -76,3 +76,19 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.toptal.com/developers/gitignore/api/windows,macos,linux
+
+### Python / Django ###
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+.env
+db.sqlite3
+*.sqlite3
+staticfiles/
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
