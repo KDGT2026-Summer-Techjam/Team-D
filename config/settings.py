@@ -25,6 +25,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "core.apps.CoreConfig",
+    "events.apps.EventsConfig",
+    "interactions.apps.InteractionsConfig",
 ]
 
 MIDDLEWARE = [
