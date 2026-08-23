@@ -52,8 +52,8 @@ class Event(models.Model):
     # （重複防止のDB制約をEventTag側に持たせるため、throughで指定している）
     tags = models.ManyToManyField(Tag, through = "EventTag" , related_name = "events")
 
-    create_at = models.DateTimeField(auto_now_add = True)
-    update_at = models.DateTimeField(auto_now = True)
+    created_at = models.DateTimeField(auto_now_add = True)
+    updated_at = models.DateTimeField(auto_now = True)
 
     class Meta:
         ordering = ["-start_datetime"]  # デフォルトで開催日時が新しい順に並べる
