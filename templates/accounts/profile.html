@@ -20,13 +20,13 @@
     <div class="account-card">
 
         <div class="profile-icon">
-            {{ user.username|first|upper }}
+            {{ user.name|first|upper }}
         </div>
 
         <div class="account-info">
 
             <h2>
-                {{ user.username }}
+                {{ user.name }}
             </h2>
 
             {% if user.email %}
@@ -40,23 +40,41 @@
     </div>
 
 
+    <div class="profile-form-container">
+
+        <form method="post">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                {{ form.non_field_errors }}
+            {% endif %}
+
+            {% for field in form %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {{ field.errors }}
+                </div>
+            {% endfor %}
+
+            <button type="submit" class="button button-primary">
+                変更を保存
+            </button>
+        </form>
+
+    </div>
+
+
     <div class="account-menu">
 
-        <a href="#" class="menu-item">
-            <span>
-                プロフィールを変更
-            </span>
-            <span>›</span>
-        </a>
-
-        <a href="#" class="menu-item">
+        <a href="{% url 'accounts:preferences' %}" class="menu-item">
             <span>
                 設定
             </span>
             <span>›</span>
         </a>
 
-        <a href="#" class="menu-item menu-item-danger">
+        <a href="{% url 'accounts:delete' %}" class="menu-item menu-item-danger">
             <span>
                 アカウントを退会する
             </span>
