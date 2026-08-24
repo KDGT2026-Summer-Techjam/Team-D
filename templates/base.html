@@ -49,8 +49,8 @@
                         アカウント
                     </a>
 
-                    <!-- 未実装のため仮リンク -->
-                    {% if user.is_superuser %}
+                    <!-- 主催者用メニュー判定 -->
+                    {% if user.is_organizer %}
                         <a href="#">
                             イベント管理
                         </a>
@@ -151,4 +151,4 @@
 
 </body>
 
-</html> 
+</html>

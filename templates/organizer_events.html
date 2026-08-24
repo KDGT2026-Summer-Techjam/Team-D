@@ -37,10 +37,10 @@
 
                         <div class="management-card-content">
 
-                            {% if event.header_image %}
+                            {% if event.image %}
 
                                 <img
-                                    src="{{ event.header_image.url }}"
+                                    src="{{ event.image.url }}"
                                     alt="{{ event.title }}"
                                     class="event-image"
                                 >
@@ -55,17 +55,17 @@
                                 </h2>
 
                                 <p>
-                                    {{ event.summary }}
+                                    {{ event.description }}
                                 </p>
 
                                 <p>
-                                    {{ event.start_at }}
+                                    {{ event.start_datetime|date:"Y/m/d H:i" }}
                                     ～
-                                    {{ event.end_at }}
+                                    {{ event.end_datetime|date:"Y/m/d H:i" }}
                                 </p>
 
                                 <p>
-                                    {{ event.address }}
+                                    {{ event.location }}
                                 </p>
 
                             </div>

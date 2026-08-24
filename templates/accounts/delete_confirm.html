@@ -18,10 +18,23 @@
             この操作は取り消せない場合があります。
         </p>
 
-
         <form method="post">
 
             {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="error-list">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            {% for field in form %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {{ field.errors }}
+                </div>
+            {% endfor %}
 
             <div class="form-actions">
 
@@ -32,7 +45,7 @@
                     退会する
                 </button>
 
-                <a href="#" class="button button-secondary">
+                <a href="{% url 'accounts:profile' %}" class="button button-secondary">
                     キャンセル
                 </a>
 
