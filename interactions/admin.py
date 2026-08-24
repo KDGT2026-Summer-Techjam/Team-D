@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Favorite, Like, EventView, Review
+from .models import Favorite, Like, EventView, Rating
 
 # Register your models here.
 
@@ -18,8 +18,8 @@ class EventViewAdmin(admin.ModelAdmin):
     list_display = ("user", "event", "viewed_at")
 
 
-@admin.register(Review)
-class ReviewAdmin(admin.ModelAdmin):
+@admin.register(Rating)
+class RatingAdmin(admin.ModelAdmin):
     list_display = ("user", "event", "rating", "created_at")
     list_filter = ("rating",)
 # Register your models here.
