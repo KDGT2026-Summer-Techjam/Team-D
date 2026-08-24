@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404, render
 from django.contrib.auth.decorators import login_required
 
+from .models import Event
 from interactions.models import Favorite, Like
 from interactions.services import InteractionService
 from .services import EventService
@@ -28,3 +29,14 @@ def event_detail(request, pk):
         "is_liked": is_liked,
     }
     return render(request, "events/event_detail.html", context)
+
+@login_required
+def my_favorites(request):
+    events = Event.objects.filter(favorites__user=request.user)
+    return render(request, "events/my_favorites.html", {"events": events})
+
+@login_required
+def my_view_history(request):
+    from interactions.models import EventView
+    views = EventView.objects.filter(user=request.user).select_related("event")
+    return render(request, "events/my_view_history.html", {"views": views})

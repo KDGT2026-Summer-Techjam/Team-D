@@ -3,6 +3,8 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.utils import timezone
 from datetime import timedelta
+from django.urls import reverse
+from interactions.models import Favorite
 
 from .models import Event
 from .services import EventService
@@ -92,3 +94,40 @@ class EventServiceTests(TestCase):
 
         self.assertIn(published, result)
         self.assertEqual(result.count(), 1)
+
+class MyFavoritesViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="user1", password="pass")
+        self.organizer = User.objects.create_user(username="organizer", password="pass")
+
+        self.event = Event.objects.create(
+            title="テストイベント",
+            organizer=self.organizer,
+            start_datetime=timezone.now() + timedelta(days=1),
+            end_datetime=timezone.now() + timedelta(days=2),
+            status=Event.Status.PUBLISH,
+        )
+        Favorite.objects.create(event=self.event, user=self.user)
+
+    def test_my_favorites_requires_login(self):
+        response = self.client.get(reverse("events:my_favorites"))
+        self.assertEqual(response.status_code, 302)
+
+    def test_my_favorites_accessible_when_logged_in(self):
+        self.client.login(username="user1", password="pass")
+        response = self.client.get(reverse("events:my_favorites"))
+        self.assertEqual(response.status_code, 200)
+
+
+class MyViewHistoryViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="user1", password="pass")
+
+    def test_my_view_history_requires_login(self):
+        response = self.client.get(reverse("events:my_view_history"))
+        self.assertEqual(response.status_code, 302)
+
+    def test_my_view_history_accessible_when_logged_in(self):
+        self.client.login(username="user1", password="pass")
+        response = self.client.get(reverse("events:my_view_history"))
+        self.assertEqual(response.status_code, 200)
