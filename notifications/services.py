@@ -1,0 +1,91 @@
+from django.db.models import prefetch_related_objects
+
+from search.models import SavedSearch
+from search.services import MatchService
+
+from .models import Notification
+
+
+def should_notify(user):
+    #通知を送ってよいユーザーかどうかを判定する。
+    # TODO: accountsアプリのnotifications_enabled実装後に連携する
+    return True
+
+
+class NotificationService:
+    #通知の作成・既読管理を行うサービス。本人だけが自分の通知を閲覧・既読化できる。
+    @staticmethod
+    def create_notification(
+        *, user, event, saved_search, message,
+        notification_type=Notification.NotificationType.MATCH,
+    ):
+        notification, _created = Notification.objects.get_or_create(
+            user=user,
+            event=event,
+            saved_search=saved_search,
+            defaults={
+                "message": message,
+                "notification_type": notification_type,
+            },
+        )
+        return notification
+
+    @staticmethod
+    def mark_as_read(*, notification, user):
+        if notification.user != user:
+            raise PermissionError("この通知を既読にする権限がありません。")
+        if not notification.is_read:
+            notification.is_read = True
+            notification.save(update_fields=["is_read"])
+        return notification
+
+    @staticmethod
+    def mark_all_as_read(*, user):
+        return Notification.objects.filter(user=user, is_read=False).update(is_read=True)
+
+    @staticmethod
+    def get_notifications(*, user):
+        return Notification.objects.filter(user=user)
+
+    @staticmethod
+    def unread_count(*, user):
+        return Notification.objects.filter(user=user, is_read=False).count()
+
+
+class EventMatchNotifier:
+    #イベント公開・更新時に、条件が一致する保存検索の持ち主へ通知を作成する。
+    @staticmethod
+    def notify_for_event(event):
+        created_notifications = []
+
+        # event側のタグは全saved_searchで共通なので、ループに入る前に1回だけ
+        # キャッシュを温めておく(MatchService.matchesはevent.tags.all()を使うため、
+        # ここでprefetchしておけばsaved_search件数分の再クエリを防げる)。
+        prefetch_related_objects([event], "tags")
+
+        saved_searches = SavedSearch.objects.filter(
+            notify_enabled=True
+        ).select_related("owner").prefetch_related("tags")
+
+        for saved_search in saved_searches:
+            if not should_notify(saved_search.owner):
+                continue
+            if not MatchService.matches(saved_search, event):
+                continue
+
+            notification, created = Notification.objects.get_or_create(
+                user=saved_search.owner,
+                event=event,
+                saved_search=saved_search,
+                defaults={
+                    "message": (
+                        f"「{saved_search.keyword or event.title}」の条件に"
+                        "一致するイベントが見つかりました。"
+                    ),
+                    "notification_type": Notification.NotificationType.MATCH,
+                },
+            )
+            if created:
+                created_notifications.append(notification)
+
+        return created_notifications

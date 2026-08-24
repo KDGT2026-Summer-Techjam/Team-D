@@ -27,6 +27,8 @@ INSTALLED_APPS = [
     "core.apps.CoreConfig",
     "events.apps.EventsConfig",
     "interactions.apps.InteractionsConfig",
+    "search.apps.SearchConfig",
+    "notifications.apps.NotificationsConfig",
 ]
 
 MIDDLEWARE = [

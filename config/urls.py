@@ -9,4 +9,6 @@ urlpatterns = [
     path("", include("core.urls")),
     path("events/", include("events.urls")),
     path("interactions/", include("interactions.urls")),
+    path("search/", include("search.urls", namespace="search")),
+    path("notifications/", include("notifications.urls", namespace="notifications")),
 ]
