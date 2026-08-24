@@ -23,45 +23,42 @@
         <div class="header-inner">
 
             <!-- ロゴ -->
-            <a href="{% url 'home' %}" class="logo">
+            <a href="{% url 'core:home' %}" class="logo">
                 TechJamSummer
             </a>
 
             <!-- ナビゲーション -->
             <nav class="main-nav">
 
-                <a href="{% url 'home' %}">
+                <a href="{% url 'core:home' %}">
                     ホーム
                 </a>
 
-                <a href="{% url 'search_results' %}">
+                <a href="{% url 'core:search_results' %}">
                     イベント検索
                 </a>
 
-                <a href="{% url 'notifications' %}" class="notification-link">
+                <!-- 未実装のため仮リンク -->
+                <a href="#" class="notification-link">
                     通知
-
-                    {% if unread_count %}
-                        <span class="notification-badge">
-                            {{ unread_count }}
-                        </span>
-                    {% endif %}
                 </a>
 
                 {% if user.is_authenticated %}
 
-                    <a href="{% url 'account' %}">
+                    <a href="{% url 'accounts:profile' %}">
                         アカウント
                     </a>
 
+                    <!-- 未実装のため仮リンク -->
                     {% if user.is_superuser %}
-                        <a href="{% url 'organizer_events' %}">
+                        <a href="#">
                             イベント管理
                         </a>
                     {% endif %}
 
+                    <!-- ログアウト -->
                     <form method="post"
-                          action="{% url 'logout' %}"
+                          action="{% url 'accounts:logout' %}"
                           class="logout-form">
 
                         {% csrf_token %}
@@ -74,11 +71,11 @@
 
                 {% else %}
 
-                    <a href="{% url 'login' %}">
+                    <a href="{% url 'accounts:login' %}">
                         ログイン
                     </a>
 
-                    <a href="{% url 'register' %}">
+                    <a href="{% url 'accounts:signup' %}">
                         アカウント作成
                     </a>
 
@@ -132,11 +129,11 @@
             <p>&copy; 2026 TechJamSummer</p>
 
             <nav>
-                <a href="{% url 'home' %}">
+                <a href="{% url 'core:home' %}">
                     ホーム
                 </a>
 
-                <a href="{% url 'settings' %}">
+                <a href="{% url 'accounts:preferences' %}">
                     設定
                 </a>
             </nav>
@@ -154,4 +151,4 @@
 
 </body>
 
-</html>
+</html> l
