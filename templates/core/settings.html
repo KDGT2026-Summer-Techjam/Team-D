@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}設定 | TechJamSummer{% endblock %}
+
+{% block content %}
+
+<section class="settings-page">
+
+    <div class="page-header">
+
+        <h1>設定</h1>
+
+        <p>
+            通知などの設定を変更できます。
+        </p>
+
+    </div>
+
+
+    <form method="post" class="settings-card">
+
+        {% csrf_token %}
+
+        {% if form %}
+
+            {% for field in form %}
+
+                <div class="setting-item">
+
+                    <div>
+                        <label for="{{ field.id_for_label }}">
+                            {{ field.label }}
+                        </label>
+
+                        {% if field.help_text %}
+                            <p class="help-text">
+                                {{ field.help_text }}
+                            </p>
+                        {% endif %}
+                    </div>
+
+                    {{ field }}
+
+                </div>
+
+            {% endfor %}
+
+        {% else %}
+
+            <div class="setting-item">
+
+                <div>
+                    <strong>通知を受け取る</strong>
+
+                    <p class="help-text">
+                        イベントに関する通知を受け取ります。
+                    </p>
+                </div>
+
+                <input
+                    type="checkbox"
+                    name="notification_enabled"
+                    checked
+                >
+
+            </div>
+
+        {% endif %}
+
+
+        <button type="submit" class="button button-primary">
+            設定を保存
+        </button>
+
+    </form>
+
+</section>
+
+{% endblock %}

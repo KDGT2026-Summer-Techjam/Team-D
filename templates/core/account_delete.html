@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}退会確認 | TechJamSummer{% endblock %}
+
+{% block content %}
+
+<section class="confirm-page">
+
+    <div class="confirm-card">
+
+        <h1>アカウントを退会しますか？</h1>
+
+        <p>
+            退会すると、アカウントに関連する情報が利用できなくなる場合があります。
+        </p>
+
+        <p class="warning-text">
+            この操作は取り消せない場合があります。
+        </p>
+
+
+        <form method="post">
+
+            {% csrf_token %}
+
+            <div class="form-actions">
+
+                <button
+                    type="submit"
+                    class="button button-danger"
+                >
+                    退会する
+                </button>
+
+                <a href="#" class="button button-secondary">
+                    キャンセル
+                </a>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</section>
+
+{% endblock %}

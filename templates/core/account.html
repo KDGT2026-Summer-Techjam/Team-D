@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}アカウント | TechJamSummer{% endblock %}
+
+{% block content %}
+
+<section class="account-page">
+
+    <div class="page-header">
+
+        <h1>アカウント</h1>
+
+        <p>
+            アカウント情報を確認できます。
+        </p>
+
+    </div>
+
+
+    <div class="account-card">
+
+        <div class="profile-icon">
+            {{ user.username|first|upper }}
+        </div>
+
+        <div class="account-info">
+
+            <h2>
+                {{ user.username }}
+            </h2>
+
+            {% if user.email %}
+                <p>
+                    {{ user.email }}
+                </p>
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <div class="account-menu">
+
+        <a href="#" class="menu-item">
+            <span>
+                プロフィールを変更
+            </span>
+            <span>›</span>
+        </a>
+
+        <a href="#" class="menu-item">
+            <span>
+                設定
+            </span>
+            <span>›</span>
+        </a>
+
+        <a href="#" class="menu-item menu-item-danger">
+            <span>
+                アカウントを退会する
+            </span>
+            <span>›</span>
+        </a>
+
+    </div>
+
+</section>
+
+{% endblock %}
