@@ -13,13 +13,13 @@ User = get_user_model()
 
 
 def _make_event(*, organizer, title="イベント", status=Event.Status.PUBLISH,
-                 explanation="", location="", start_offset_days=1,
+                 description="", location="", start_offset_days=1,
                  duration_days=1, min_age=None, max_age=None, tags=None):
     start = timezone.now() + timedelta(days=start_offset_days)
     end = start + timedelta(days=duration_days)
     event = Event.objects.create(
         title=title,
-        explanation=explanation,
+        description=description,
         organizer=organizer,
         start_datetime=start,
         end_datetime=end,
@@ -57,10 +57,10 @@ class SearchServiceTests(TestCase):
 
         self.assertEqual(results.count(), 0)
 
-    def test_keyword_matches_title_or_explanation(self):
-        matching = _make_event(organizer=self.organizer, title="夏祭り", explanation="")
-        _make_event(organizer=self.organizer, title="花火大会", explanation="夏祭りの様子")
-        non_matching = _make_event(organizer=self.organizer, title="冬フェス", explanation="")
+    def test_keyword_matches_title_or_description(self):
+        matching = _make_event(organizer=self.organizer, title="夏祭り", description="")
+        _make_event(organizer=self.organizer, title="花火大会", description="夏祭りの様子")
+        non_matching = _make_event(organizer=self.organizer, title="冬フェス", description="")
 
         results = SearchService.search(SearchCriteria(keyword="夏祭り"))
 

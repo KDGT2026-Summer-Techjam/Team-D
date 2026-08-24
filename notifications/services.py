@@ -7,9 +7,10 @@ from .models import Notification
 
 
 def should_notify(user):
-    #通知を送ってよいユーザーかどうかを判定する。
-    # TODO: accountsアプリのnotifications_enabled実装後に連携する
-    return True
+    preference = getattr(user, "preference", None)
+    if preference is None:
+        return True
+    return preference.notifications_enabled
 
 
 class NotificationService:

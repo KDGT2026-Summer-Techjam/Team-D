@@ -18,7 +18,7 @@ class SearchService:
         if criteria.keyword:
             queryset = queryset.filter(
                 Q(title__icontains=criteria.keyword)
-                | Q(explanation__icontains=criteria.keyword)
+                | Q(description__icontains=criteria.keyword)
             )
 
         if criteria.location:
@@ -93,7 +93,7 @@ class MatchService:
 
         if saved_search.keyword:
             keyword = saved_search.keyword.lower()
-            if keyword not in event.title.lower() and keyword not in event.explanation.lower():
+            if keyword not in event.title.lower() and keyword not in event.description.lower():
                 return False
 
         if saved_search.location:

@@ -44,7 +44,7 @@ POST(保存検索のCRUD)を同一URL・同一ビュー(`search_results`)で処�
 
 | パラメータ | 型 | 意味 |
 |---|---|---|
-| `keyword` | 文字列 | イベントの`title`または`explanation`に部分一致(大小無視) |
+| `keyword` | 文字列 | イベントの`title`または`description`に部分一致(大小無視) |
 | `location` | 文字列 | イベントの`location`に部分一致(大小無視) |
 | `period_from` | 日付(`YYYY-MM-DD`) | 開催期間の下限。不正な形式は無視されNone扱い |
 | `period_to` | 日付(`YYYY-MM-DD`) | 開催期間の上限。不正な形式は無視されNone扱い |
@@ -140,7 +140,7 @@ Djangoの既定ログインURL(`/accounts/login/`)へ302リダイレクトされ
 - **`SearchService.search(criteria: SearchCriteria) -> QuerySet[Event]`**
   `search/queries.py::published_events()`(`status`が`DRAFT`/`CANCEL`のイベントを
   除外)を起点に、`criteria`の非空フィールドのみを`Q`でAND結合して絞り込む
-  (`keyword`はtitle/explanationへのOR、`tag`は複数指定時OR)。空条件なら全公開
+  (`keyword`はtitle/descriptionへのOR、`tag`は複数指定時OR)。空条件なら全公開
   イベントをそのまま返す。
 - **`SavedSearchService.create(*, owner, tag_ids=None, **fields) -> SavedSearch`**
   `full_clean()`実行後保存。`tag_ids`指定時は`tags.set(...)`。
