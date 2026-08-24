@@ -1,10 +1,12 @@
 {% load static %}
-
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="description" content="TechJamSummerのイベント検索サイト">
 
     <title>{% block title %}TechJamSummer{% endblock %}</title>
 
@@ -15,123 +17,141 @@
 
 <body>
 
-<header class="site-header">
+    <!-- ヘッダー -->
+    <header class="site-header">
 
-    <div class="header-inner">
+        <div class="header-inner">
 
-        <a href="{% url 'home' %}" class="logo">
-            TechJamSummer
-        </a>
-
-        <nav class="main-nav">
-
-            <a href="{% url 'home' %}">
-                ホーム
+            <!-- ロゴ -->
+            <a href="{% url 'home' %}" class="logo">
+                TechJamSummer
             </a>
 
-            <a href="{% url 'search_results' %}">
-                イベント検索
-            </a>
+            <!-- ナビゲーション -->
+            <nav class="main-nav">
 
-            <a href="{% url 'notifications' %}" class="notification-link">
-                通知
-                {% if unread_count %}
-                    <span class="notification-badge">
-                        {{ unread_count }}
-                    </span>
-                {% endif %}
-            </a>
-
-            {% if user.is_authenticated %}
-
-                <a href="{% url 'account' %}">
-                    アカウント
+                <a href="{% url 'home' %}">
+                    ホーム
                 </a>
 
-                {% if user.is_superuser %}
-                    <a href="{% url 'organizer_events' %}">
-                        イベント管理
+                <a href="{% url 'search_results' %}">
+                    イベント検索
+                </a>
+
+                <a href="{% url 'notifications' %}" class="notification-link">
+                    通知
+
+                    {% if unread_count %}
+                        <span class="notification-badge">
+                            {{ unread_count }}
+                        </span>
+                    {% endif %}
+                </a>
+
+                {% if user.is_authenticated %}
+
+                    <a href="{% url 'account' %}">
+                        アカウント
                     </a>
+
+                    {% if user.is_superuser %}
+                        <a href="{% url 'organizer_events' %}">
+                            イベント管理
+                        </a>
+                    {% endif %}
+
+                    <form method="post"
+                          action="{% url 'logout' %}"
+                          class="logout-form">
+
+                        {% csrf_token %}
+
+                        <button type="submit">
+                            ログアウト
+                        </button>
+
+                    </form>
+
+                {% else %}
+
+                    <a href="{% url 'login' %}">
+                        ログイン
+                    </a>
+
+                    <a href="{% url 'register' %}">
+                        アカウント作成
+                    </a>
+
                 {% endif %}
 
-                <form method="post" action="{% url 'logout' %}" class="logout-form">
-                    {% csrf_token %}
-                    <button type="submit">
-                        ログアウト
-                    </button>
-                </form>
+            </nav>
 
-            {% else %}
-
-                <a href="{% url 'login' %}">
-                    ログイン
-                </a>
-
-                <a href="{% url 'register' %}">
-                    アカウント作成
-                </a>
-
-            {% endif %}
-
-        </nav>
-
-        <!-- スマートフォン用メニューボタン -->
-        <button class="menu-button" type="button">
-            ☰
-        </button>
-
-    </div>
-
-</header>
-
-
-<main class="main-content">
-
-    {% if messages %}
-        <div class="messages">
-
-            {% for message in messages %}
-
-                <div class="message message-{{ message.tags }}">
-                    {{ message }}
-                </div>
-
-            {% endfor %}
+            <!-- スマートフォン用メニューボタン -->
+            <button class="menu-button" type="button">
+                ☰
+            </button>
 
         </div>
-    {% endif %}
+
+    </header>
 
 
-    {% block content %}
+    <!-- メインコンテンツ -->
+    <main class="main-content">
+
+        <!-- Djangoメッセージ -->
+        {% if messages %}
+
+            <div class="messages">
+
+                {% for message in messages %}
+
+                    <div class="message message-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+        {% endif %}
+
+
+        <!-- 各ページの内容 -->
+        {% block content %}
+        {% endblock %}
+
+    </main>
+
+
+    <!-- フッター -->
+    <footer class="site-footer">
+
+        <div class="footer-inner">
+
+            <p>&copy; 2026 TechJamSummer</p>
+
+            <nav>
+                <a href="{% url 'home' %}">
+                    ホーム
+                </a>
+
+                <a href="{% url 'settings' %}">
+                    設定
+                </a>
+            </nav>
+
+        </div>
+
+    </footer>
+
+
+    <!-- JavaScript -->
+    <script src="{% static 'js/common.js' %}"></script>
+
+    {% block extra_js %}
     {% endblock %}
 
-</main>
-
-
-<footer class="site-footer">
-
-    <div class="footer-inner">
-
-        <p>&copy; 2026 TechJamSummer</p>
-
-        <nav>
-            <a href="{% url 'home' %}">
-                ホーム
-            </a>
-
-            <a href="{% url 'settings' %}">
-                設定
-            </a>
-        </nav>
-
-    </div>
-
-</footer>
-
-
-<script src="{% static 'js/common.js' %}"></script>
-
-{% block extra_js %}{% endblock %}
-
 </body>
+
 </html>
