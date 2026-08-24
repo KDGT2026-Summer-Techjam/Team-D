@@ -10,7 +10,7 @@ class EventTagInline(admin.TabularInline):
 class EventAdmin(admin.ModelAdmin):
     list_display = ("title", "organizer", "status", "start_datetime", "end_datetime")
     list_filter = ("status",)
-    search_fields = ("title", "explanation")
+    search_fields = ("title", "description")
     inlines = [EventTagInline]
 
 @admin.register(Tag)

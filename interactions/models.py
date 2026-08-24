@@ -53,12 +53,12 @@ class EventView(models.Model):
     def __str__(self):
         return f"{self.user} viewed {self.event.title}"
 
-class Review(models.Model):
-    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="reviews")
+class Rating(models.Model):
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="ratings")
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="reviews",
+        related_name="ratings",
     )
 
     rating = models.PositiveSmallIntegerField(

@@ -15,21 +15,18 @@ class EventService:
         event.save()
         return event
 
-@staticmethod
-def update_event(*, event, user, **fields):
-    if not (user == event.organizer or user.is_staff):
-        raise PermissionError("このイベントを編集する権限がありません。")
+    @staticmethod
+    def update_event(*, event, user, **fields):
+        if not (user == event.organizer or user.is_staff):
+            raise PermissionError("このイベントを編集する権限がありません。")
+        for field_name, value in fields.items():
+            setattr(event, field_name, value)
+        event.full_clean()
+        event.save()
+        return event
 
-    for field_name, value in fields.items():
-        setattr(event, field_name, value)
-
-    event.full_clean()
-    event.save()
-    return event
-
-@staticmethod
-def delete_event(*, event, user):
-    if not (user == event.organizer or user.is_staff):
-        raise PermissionError("このイベントを削除する権限がありません。")
-
-    event.delete()
+    @staticmethod
+    def delete_event(*, event, user):
+        if not (user == event.organizer or user.is_staff):
+            raise PermissionError("このイベントを削除する権限がありません。")
+        event.delete()

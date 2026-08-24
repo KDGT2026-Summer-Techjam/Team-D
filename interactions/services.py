@@ -2,7 +2,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.db.models import Avg, Count
 
-from .models import Favorite, Like, EventView, Review
+from .models import Favorite, Like, EventView, Rating
 
 
 class InteractionService:
@@ -42,10 +42,10 @@ class InteractionService:
 
     @staticmethod
     def submit_review(*, event, user, rating, comment=None):
-        if Review.objects.filter(event=event, user=user).exists():
+        if Rating.objects.filter(event=event, user=user).exists():
             raise ValidationError("すでに評価・レビュー済みです。編集はupdate_reviewを使ってください。")
         
-        review = Review(event=event, user=user, rating=rating, comment=comment)
+        review = Rating(event=event, user=user, rating=rating, comment=comment)
         review.full_clean()
         review.save()
         return review
@@ -72,7 +72,7 @@ class InteractionService:
 
     @staticmethod
     def get_event_stats(event):
-        review_stats = event.reviews.aggregate(
+        review_stats = event.ratings.aggregate(
             average_rating=Avg("rating"),
             review_count=Count("id"),
         )

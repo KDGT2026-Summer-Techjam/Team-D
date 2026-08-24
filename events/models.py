@@ -22,7 +22,7 @@ class Event(models.Model):
         CANCEL = "cancel" , "中止"
 
     title = models.CharField(max_length = 100)
-    explanation = models.TextField(blank = True)
+    description = models.TextField(blank=True)
 
     organizer = models.ForeignKey(
         settings.AUTH_USER_MODEL,
