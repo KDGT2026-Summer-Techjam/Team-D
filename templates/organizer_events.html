@@ -18,7 +18,8 @@
                 </p>
             </div>
 
-            <a href="{% url 'event_create' %}"
+            <!-- event_create は未実装のため仮リンク -->
+            <a href="#"
                class="button button-primary">
                 イベントを作成
             </a>
@@ -74,22 +75,25 @@
 
                         <div class="management-actions">
 
+                            <!-- イベント詳細 -->
                             <a
-                                href="{% url 'event_detail' event.id %}"
+                                href="{% url 'events:event_detail' event.id %}"
                                 class="button button-secondary"
                             >
                                 詳細
                             </a>
 
+                            <!-- event_edit は未実装のため仮リンク -->
                             <a
-                                href="{% url 'event_edit' event.id %}"
+                                href="#"
                                 class="button button-secondary"
                             >
                                 編集
                             </a>
 
+                            <!-- event_delete は未実装のため仮リンク -->
                             <a
-                                href="{% url 'event_delete' event.id %}"
+                                href="#"
                                 class="button button-danger"
                             >
                                 削除
@@ -113,8 +117,9 @@
                     まだイベントを作成していません。
                 </p>
 
+                <!-- event_create は未実装のため仮リンク -->
                 <a
-                    href="{% url 'event_create' %}"
+                    href="#"
                     class="button button-primary"
                 >
                     イベントを作成する
