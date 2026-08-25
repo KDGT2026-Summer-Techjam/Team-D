@@ -1,7 +1,7 @@
 /* 基本・変数設定*/
 :root {
-    --primary-color: #0666eb;
-    --primary-hover: #0052c2;
+    --primary-color: #256d4a;
+    --primary-hover: #174b33;
     --danger-color: #dc3545;
     --danger-hover: #bb2d3b;
     --bg-color: #f8f9fa;
@@ -9,6 +9,7 @@
     --border-color: #e9ecef;
     --text-color: #212529;
     --text-muted: #6c757d;
+    --highlight-color: #eef1e2;
     --radius-sm: 6px;
     --radius-md: 10px;
     --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
@@ -135,7 +136,7 @@ a:hover {
 
 .sidebar-nav a:hover,
 .sidebar-nav a.active {
-    background-color: #e7f1ff;
+    background-color: var(--highlight-color);
     color: var(--primary-color);
     font-weight: 600;
 }
@@ -198,7 +199,7 @@ a:hover {
 .form-group input:focus,
 .form-group select:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(6, 102, 235, 0.15);
+    box-shadow: 0 0 0 3px rgba(37, 109, 74, 0.15);
 }
 
 /* ボタン */
@@ -270,7 +271,7 @@ a:hover {
     width: 64px;
     height: 64px;
     border-radius: 50%;
-    background-color: #c0d8f8;
+    background-color: #e8f3ec;
     color: var(--primary-color);
     display: flex;
     align-items: center;
@@ -516,7 +517,7 @@ textarea {
     flex: 0 0 64px;
     place-items: center;
     border-radius: 50%;
-    background: #dceaff;
+    background: #e8f3ec;
     color: var(--primary-color);
     font-size: 24px;
     font-weight: 700;
@@ -628,7 +629,7 @@ textarea {
 
 .notification-item.unread {
     border-left: 4px solid var(--primary-color);
-    background: #f5f9ff;
+    background: #f0f7f2;
 }
 
 .notification-link {

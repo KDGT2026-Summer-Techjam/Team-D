@@ -4,7 +4,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: var(--bg-color);
+    background-color: var(--highlight-color);
 }
 
 .login-card {
@@ -67,7 +67,7 @@
 .login-form input[type="email"]:focus,
 .login-form input[type="password"]:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(6, 102, 235, 0.15);
+    box-shadow: 0 0 0 3px rgba(37, 109, 74, 0.15);
 }
 
 .login-button {

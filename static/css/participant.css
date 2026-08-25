@@ -7,6 +7,7 @@
   --participant-primary: #256d4a;
   --participant-primary-dark: #174b33;
   --participant-accent: #e8f3ec;
+  --participant-highlight: var(--highlight-color, #eef1e2);
   --participant-danger: #a33a3a;
   --participant-radius: 16px;
   --participant-shadow: 0 12px 32px rgba(39, 66, 49, 0.09);
@@ -58,7 +59,7 @@
   margin-top: 32px;
   padding: clamp(28px, 6vw, 64px);
   border-radius: 24px;
-  background: #eef1e2;
+  background: var(--participant-highlight);
 }
 
 .hero-copy {
@@ -221,6 +222,8 @@
 }
 
 .event-card {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
   overflow: hidden;
   border: 1px solid var(--participant-border);
@@ -234,7 +237,7 @@
   display: grid;
   overflow: hidden;
   place-items: center;
-  background: #eef1e2;
+  background: var(--participant-highlight);
 }
 
 .event-card-image {
@@ -257,7 +260,14 @@
 }
 
 .event-card-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
   padding: 20px;
+}
+
+.event-card-body > .button {
+  margin-top: auto;
 }
 
 .event-card-body h3 {
@@ -456,7 +466,7 @@
 }
 
 .search-panel {
-  background: var(--participant-surface);
+  background: var(--participant-highlight);
   box-shadow: var(--participant-shadow);
 }
 
