@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}イベント一覧 | EventMatchTechjamsummer{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/participant.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="participant-page page-section">
+  <div class="page-title-row">
+    <div>
+      <p class="eyebrow">EVENTS</p>
+      <h1>イベント一覧</h1>
+      <p>公開中のイベントを開催日順に確認できます。</p>
+    </div>
+    <form class="sort-form" method="get">
+      <label for="event-sort">並べ替え</label>
+      <select id="event-sort" name="sort">
+        <option value="start_asc" {% if selected_sort == "start_asc" %}selected{% endif %}>開催日が近い順</option>
+        <option value="start_desc" {% if selected_sort == "start_desc" %}selected{% endif %}>開催日が遠い順</option>
+        <option value="newest" {% if selected_sort == "newest" %}selected{% endif %}>新着順</option>
+      </select>
+      <button class="button button-secondary" type="submit">並べ替える</button>
+    </form>
+  </div>
+
+  {% if events %}
+    <div class="event-grid">
+      {% for event in events %}
+        {% include "events/_event_card.html" with event=event %}
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <h2>公開中のイベントはありません</h2>
+      <p>条件を変えて検索するか、後でもう一度ご確認ください。</p>
+      <a class="button button-primary" href="{% url 'search:search_results' %}">詳しく検索する</a>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

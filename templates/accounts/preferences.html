@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}設定 | EventMatchTechjamsummer{% endblock %}
+
+{% block content %}
+
+<section class="settings-page">
+
+    <div class="page-header">
+
+        <h1>設定</h1>
+
+        <p>
+            開催地とタグを登録すると、条件に合う新しいイベントを通知します。
+        </p>
+
+    </div>
+
+
+    <form method="post" class="settings-card">
+
+        {% csrf_token %}
+
+        {% if form %}
+
+            {% for field in form %}
+
+                <div class="setting-item">
+
+                    <div>
+                        <label for="{{ field.id_for_label }}">
+                            {{ field.label }}
+                        </label>
+
+                        {% if field.help_text %}
+                            <p class="help-text">
+                                {{ field.help_text }}
+                            </p>
+                        {% endif %}
+                    </div>
+
+                    {% if field.name == "notification_tags" %}
+                        <div class="preference-tag-options">
+                            {% for option in field %}
+                                <label class="preference-tag-option">
+                                    {{ option.tag }}
+                                    <span>{{ option.choice_label }}</span>
+                                </label>
+                            {% empty %}
+                                <p class="help-text">選択できるタグはまだありません。</p>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {{ field }}
+                    {% endif %}
+
+                    {% if field.errors %}
+                        <div class="field-error">{{ field.errors }}</div>
+                    {% endif %}
+
+                </div>
+
+            {% endfor %}
+
+        {% endif %}
+
+
+        <button type="submit" class="button button-primary">
+            設定を保存
+        </button>
+
+    </form>
+
+</section>
+
+{% endblock %}

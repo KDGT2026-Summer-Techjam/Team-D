@@ -1,0 +1,31 @@
+<article class="event-card">
+  <a class="event-card-image" href="{% url 'events:event_detail' event.pk %}" aria-label="{{ event.title }}の詳細を見る">
+    {% if event.image %}
+      <img src="{{ event.image.url }}" alt="{{ event.title }}">
+    {% else %}
+      <span class="image-placeholder" aria-hidden="true">EVENT</span>
+    {% endif %}
+  </a>
+  <div class="event-card-body">
+    <div class="tag-list" aria-label="イベントのタグ">
+      {% for tag in event.tags.all %}
+        <span class="tag">{{ tag.name }}</span>
+      {% empty %}
+        <span class="tag tag-muted">タグなし</span>
+      {% endfor %}
+    </div>
+    <h3><a href="{% url 'events:event_detail' event.pk %}">{{ event.title }}</a></h3>
+    <dl class="event-meta">
+      <div>
+        <dt>日時</dt>
+        <dd>{{ event.start_datetime|date:"Y年n月j日 H:i" }}</dd>
+      </div>
+      <div>
+        <dt>場所</dt>
+        <dd>{{ event.location|default:"未定" }}</dd>
+      </div>
+    </dl>
+    <p class="event-summary">{{ event.description|default:"イベントの説明はありません。"|truncatechars:90 }}</p>
+    <a class="button button-secondary" href="{% url 'events:event_detail' event.pk %}">詳細を見る</a>
+  </div>
+</article>

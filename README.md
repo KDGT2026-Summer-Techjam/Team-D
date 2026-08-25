@@ -4,8 +4,7 @@ Djangoを使ったイベント共有アプリの学習用プロジェクトで�
 
 ## 現在の学習範囲
 
-現在は次の画面用ファイルだけを用意しています。ファイルの中身、URL、ビュー、
-フォーム、データベース処理はまだ実装していません。
+現在は画面のひな型に加え、担当1のアカウント基盤を実装しています。
 
 - `templates/core/home.html`
 - `templates/core/search_results.html`
@@ -18,6 +17,15 @@ Djangoを使ったイベント共有アプリの学習用プロジェクトで�
 - `core/urls.py`
 - `core/forms.py`
 - `core/tests.py`
+- メールアドレスをログインIDとするカスタムユーザー
+- 一般参加者・主催者・管理者の区分
+- ユーザー設定（希望地域、通知可否、テーマ）
+- 登録、ログイン、ログアウト、プロフィール変更、設定、退会のバックエンド
+- 主催者権限用の`OrganizerRequiredMixin`
+- アカウント機能の自動テスト
+
+アカウント画面のテンプレートはフロントエンド担当が追加します。担当間の接続方法は
+`docs/担当1_接続仕様.md`を参照してください。
 
 ## 必要な環境
 
@@ -56,8 +64,10 @@ python manage.py test
 ```text
 config/             プロジェクト全体の設定
 core/               画面用の空ファイルを置くアプリ
+accounts/           ユーザー、認証、設定、権限
 templates/          HTMLテンプレート
 static/             CSSなどの静的ファイル
+docs/               担当間の接続仕様
 manage.py           Django管理コマンドの入口
 requirements.txt    Python依存パッケージ
 ```
