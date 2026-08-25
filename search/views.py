@@ -1,5 +1,6 @@
 from datetime import date
 
+from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.http import HttpResponseBadRequest, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
@@ -10,7 +11,15 @@ from .criteria import SearchCriteria
 from .models import SavedSearch
 from .services import SavedSearchService, SearchService
 
-# Create your views here.
+SEARCH_SORT_FIELDS = {
+    "start_asc": ("start_datetime", "pk"),
+    "start_desc": ("-start_datetime", "pk"),
+    "newest": ("-created_at", "pk"),
+}
+
+
+def _validation_message(error):
+    return " ".join(error.messages)
 
 
 def _parse_optional_int(value):
@@ -121,8 +130,10 @@ def _handle_create(request):
             ),
             tag_ids=_parse_int_list(request.POST.getlist("tag")),
         )
-    except ValidationError:
-        pass
+    except ValidationError as error:
+        messages.error(request, _validation_message(error))
+    else:
+        messages.success(request, "検索条件を保存しました。")
     return None
 
 
@@ -152,8 +163,12 @@ def _handle_update(request):
                 request.POST, saved_search.tags.values_list("id", flat=True)
             ),
         )
-    except (ValidationError, PermissionError):
-        pass
+    except ValidationError as error:
+        messages.error(request, _validation_message(error))
+    except PermissionError as error:
+        messages.error(request, str(error))
+    else:
+        messages.success(request, "保存した検索条件を更新しました。")
     return None
 
 
@@ -167,8 +182,10 @@ def _handle_delete(request):
 
     try:
         SavedSearchService.delete(saved_search=saved_search, user=request.user)
-    except PermissionError:
-        pass
+    except PermissionError as error:
+        messages.error(request, str(error))
+    else:
+        messages.success(request, "保存した検索条件を削除しました。")
     return None
 
 
@@ -199,7 +216,16 @@ def search_results(request):
         return redirect("search:search_results")
 
     criteria = _build_criteria_from(request.GET)
-    events = SearchService.search(criteria)
+    selected_sort = request.GET.get("sort", "start_asc")
+    if selected_sort not in SEARCH_SORT_FIELDS:
+        selected_sort = "start_asc"
+
+    events = (
+        SearchService.search(criteria)
+        .select_related("organizer")
+        .prefetch_related("tags")
+        .order_by(*SEARCH_SORT_FIELDS[selected_sort])
+    )
 
     saved_searches = SavedSearch.objects.none()
     if request.user.is_authenticated:
@@ -210,5 +236,6 @@ def search_results(request):
         "criteria": criteria,
         "saved_searches": saved_searches,
         "all_tags": Tag.objects.all(),
+        "selected_sort": selected_sort,
     }
     return render(request, "search/search_results.html", context)

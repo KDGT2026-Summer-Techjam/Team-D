@@ -1,180 +1,197 @@
+{% extends "base.html" %}
 {% load static %}
-<!doctype html>
-<html lang="ja">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>検索画面</title>
-  <link rel="stylesheet" href="{% static 'css/style.css' %}">
-</head>
-<body>
-  <main>
-    <h1>検索画面</h1>
 
-    <section>
-      <h2>イベント検索</h2>
-      <form method="get" action="">
-        <p>
-          <label for="id_keyword">キーワード</label>
-          <input type="text" id="id_keyword" name="keyword" value="{{ criteria.keyword }}">
-        </p>
-        <p>
-          <label for="id_location">開催地</label>
-          <input type="text" id="id_location" name="location" value="{{ criteria.location }}">
-        </p>
-        <p>
-          <label for="id_period_from">開催期間(from)</label>
-          <input type="date" id="id_period_from" name="period_from"
-                 value="{{ criteria.period_from|date:'Y-m-d' }}">
-          <label for="id_period_to">開催期間(to)</label>
-          <input type="date" id="id_period_to" name="period_to"
-                 value="{{ criteria.period_to|date:'Y-m-d' }}">
-        </p>
-        <p>
-          <label for="id_age_min">対象年齢(下限)</label>
-          <input type="number" min="0" id="id_age_min" name="age_min" value="{{ criteria.age_min }}">
-          <label for="id_age_max">対象年齢(上限)</label>
-          <input type="number" min="0" id="id_age_max" name="age_max" value="{{ criteria.age_max }}">
-        </p>
-        <p>
-          <label for="id_tag">タグ(複数選択可)</label><br>
-          <select id="id_tag" name="tag" multiple size="{{ all_tags|length|default:1 }}">
-            {% for tag in all_tags %}
-              <option value="{{ tag.id }}" {% if tag.id in criteria.tag_ids %}selected{% endif %}>
-                {{ tag.name }}
-              </option>
-            {% endfor %}
-          </select>
-        </p>
-        <p>
-          <button type="submit">検索</button>
-        </p>
-      </form>
-    </section>
+{% block title %}イベント検索 | TechJamSummer{% endblock %}
 
-    <section>
-      <h2>検索結果</h2>
-      {% if events %}
-        <ul>
-          {% for event in events %}
-            <li>
-              <strong>{{ event.title }}</strong>
-              ／ 場所: {{ event.location|default:"(未設定)" }}
-              ／ {{ event.start_datetime }} 〜 {{ event.end_datetime }}
-            </li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <p>該当するイベントはありません。</p>
-      {% endif %}
-    </section>
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/participant.css' %}">
+{% endblock %}
 
-    {% if user.is_authenticated %}
-      <section>
-        <h2>この検索条件を保存する</h2>
-        <form method="post" action="">
-          {% csrf_token %}
-          <input type="hidden" name="action" value="create">
-          <input type="hidden" name="keyword" value="{{ criteria.keyword }}">
-          <input type="hidden" name="location" value="{{ criteria.location }}">
-          <input type="hidden" name="period_from" value="{{ criteria.period_from|date:'Y-m-d' }}">
-          <input type="hidden" name="period_to" value="{{ criteria.period_to|date:'Y-m-d' }}">
-          <input type="hidden" name="age_min" value="{{ criteria.age_min }}">
-          <input type="hidden" name="age_max" value="{{ criteria.age_max }}">
-          {% for tag_id in criteria.tag_ids %}
-            <input type="hidden" name="tag" value="{{ tag_id }}">
-          {% endfor %}
-          <p>
-            {# チェックボックス未送信=OFFになるよう、隠しfalseを先に置く定番パターン #}
-            <input type="hidden" name="notify_enabled" value="false">
-            <label>
-              <input type="checkbox" name="notify_enabled" value="on" checked>
-              一致したら通知する
+{% block content %}
+<section class="participant-page page-section">
+  <div class="page-title-row">
+    <div>
+      <p class="eyebrow">SEARCH</p>
+      <h1>イベント検索</h1>
+      <p>複数の条件を組み合わせて、参加したいイベントを絞り込めます。</p>
+    </div>
+  </div>
+
+  <form class="search-panel" method="get">
+    <div class="search-fields">
+      <div class="field-group field-wide">
+        <label for="id_keyword">キーワード</label>
+        <input type="search" id="id_keyword" name="keyword" value="{{ criteria.keyword }}" placeholder="イベント名・説明から検索">
+      </div>
+      <div class="field-group">
+        <label for="id_location">開催地</label>
+        <input type="search" id="id_location" name="location" value="{{ criteria.location }}" placeholder="例：大阪市">
+      </div>
+      <div class="field-group">
+        <label for="id_period_from">開始日</label>
+        <input type="date" id="id_period_from" name="period_from" value="{{ criteria.period_from|date:'Y-m-d' }}">
+      </div>
+      <div class="field-group">
+        <label for="id_period_to">終了日</label>
+        <input type="date" id="id_period_to" name="period_to" value="{{ criteria.period_to|date:'Y-m-d' }}">
+      </div>
+      <div class="field-group">
+        <label for="id_age_min">対象年齢の下限</label>
+        <input type="number" min="0" id="id_age_min" name="age_min" value="{{ criteria.age_min }}" placeholder="0">
+      </div>
+      <div class="field-group">
+        <label for="id_age_max">対象年齢の上限</label>
+        <input type="number" min="0" id="id_age_max" name="age_max" value="{{ criteria.age_max }}" placeholder="上限なし">
+      </div>
+      <div class="field-group">
+        <label for="id_sort">並べ替え</label>
+        <select id="id_sort" name="sort">
+          <option value="start_asc" {% if selected_sort == "start_asc" %}selected{% endif %}>開催日が近い順</option>
+          <option value="start_desc" {% if selected_sort == "start_desc" %}selected{% endif %}>開催日が遠い順</option>
+          <option value="newest" {% if selected_sort == "newest" %}selected{% endif %}>新着順</option>
+        </select>
+      </div>
+    </div>
+
+    <fieldset class="tag-fieldset">
+      <legend>タグ</legend>
+      {% if all_tags %}
+        <div class="tag-options">
+          {% for tag in all_tags %}
+            <label class="check-chip">
+              <input type="checkbox" name="tag" value="{{ tag.id }}" {% if tag.id in criteria.tag_ids %}checked{% endif %}>
+              <span>{{ tag.name }}</span>
             </label>
-          </p>
-          <button type="submit">この条件で保存</button>
-        </form>
-      </section>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p>選択できるタグはまだありません。</p>
+      {% endif %}
+    </fieldset>
 
-      <section>
-        <h2>保存済み検索一覧</h2>
-        {% if saved_searches %}
-          <ul>
-            {% for saved_search in saved_searches %}
-              {% with saved_tags=saved_search.tags.all %}
-                <li>
-                  <form method="post" action="">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="update">
-                    <input type="hidden" name="pk" value="{{ saved_search.pk }}">
-                    <p>
-                      <label>キーワード
-                        <input type="text" name="keyword" value="{{ saved_search.keyword }}">
-                      </label>
-                    </p>
-                    <p>
-                      <label>開催地
-                        <input type="text" name="location" value="{{ saved_search.location }}">
-                      </label>
-                    </p>
-                    <p>
-                      <label>開催期間(from)
-                        <input type="date" name="period_from"
-                               value="{{ saved_search.period_from|date:'Y-m-d' }}">
-                      </label>
-                      <label>開催期間(to)
-                        <input type="date" name="period_to"
-                               value="{{ saved_search.period_to|date:'Y-m-d' }}">
-                      </label>
-                    </p>
-                    <p>
-                      <label>対象年齢(下限)
-                        <input type="number" min="0" name="age_min" value="{{ saved_search.age_min }}">
-                      </label>
-                      <label>対象年齢(上限)
-                        <input type="number" min="0" name="age_max" value="{{ saved_search.age_max }}">
-                      </label>
-                    </p>
-                    <p>
-                      <label for="id_saved_tag_{{ saved_search.pk }}">タグ(複数選択可)</label><br>
-                      <select id="id_saved_tag_{{ saved_search.pk }}" name="tag" multiple
-                              size="{{ all_tags|length|default:1 }}">
-                        {% for tag in all_tags %}
-                          <option value="{{ tag.id }}" {% if tag in saved_tags %}selected{% endif %}>
-                            {{ tag.name }}
-                          </option>
-                        {% endfor %}
-                      </select>
-                    </p>
-                    <p>
-                      <input type="hidden" name="notify_enabled" value="false">
-                      <label>
-                        <input type="checkbox" name="notify_enabled" value="on"
-                               {% if saved_search.notify_enabled %}checked{% endif %}>
-                        一致したら通知する
-                      </label>
-                    </p>
-                    <button type="submit">更新</button>
-                  </form>
-                  <form method="post" action="">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="delete">
-                    <input type="hidden" name="pk" value="{{ saved_search.pk }}">
-                    <button type="submit">削除</button>
-                  </form>
-                </li>
-              {% endwith %}
-            {% endfor %}
-          </ul>
-        {% else %}
-          <p>保存済みの検索条件はありません。</p>
-        {% endif %}
-      </section>
-    {% else %}
-      <section>
-        <p>保存検索を利用するにはログインが必要です。</p>
-      </section>
-    {% endif %}
-  </main>
-</body>
-</html>
+    <div class="action-row">
+      <button class="button button-primary" type="submit">この条件で検索</button>
+      <a class="button button-quiet" href="{% url 'search:search_results' %}">条件をクリア</a>
+    </div>
+  </form>
+</section>
+
+<section class="participant-page page-section" aria-labelledby="results-heading">
+  <div class="section-heading">
+    <h2 id="results-heading">検索結果</h2>
+    <span class="result-count">{{ events|length }}件</span>
+  </div>
+
+  {% if events %}
+    <div class="event-grid">
+      {% for event in events %}
+        {% include "events/_event_card.html" with event=event %}
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <h3>条件に合うイベントがありません</h3>
+      <p>キーワードを短くする、期間や年齢を広げるなど条件を変更してみてください。</p>
+    </div>
+  {% endif %}
+</section>
+
+<section class="participant-page page-section saved-search-section">
+  {% if user.is_authenticated %}
+    <details class="saved-search-card">
+      <summary>現在の検索条件を保存する</summary>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create">
+        <input type="hidden" name="keyword" value="{{ criteria.keyword }}">
+        <input type="hidden" name="location" value="{{ criteria.location }}">
+        <input type="hidden" name="period_from" value="{{ criteria.period_from|date:'Y-m-d' }}">
+        <input type="hidden" name="period_to" value="{{ criteria.period_to|date:'Y-m-d' }}">
+        <input type="hidden" name="age_min" value="{{ criteria.age_min }}">
+        <input type="hidden" name="age_max" value="{{ criteria.age_max }}">
+        {% for tag_id in criteria.tag_ids %}
+          <input type="hidden" name="tag" value="{{ tag_id }}">
+        {% endfor %}
+        <input type="hidden" name="notify_enabled" value="false">
+        <label class="check-row">
+          <input type="checkbox" name="notify_enabled" value="on" checked>
+          一致するイベントが公開されたら通知する
+        </label>
+        <button class="button button-primary" type="submit">検索条件を保存</button>
+      </form>
+    </details>
+
+    <div class="saved-search-list">
+      <h2>保存済みの検索条件</h2>
+      {% for saved_search in saved_searches %}
+        {% with saved_tags=saved_search.tags.all %}
+          <details class="saved-search-card">
+            <summary>
+              {{ saved_search.keyword|default:"キーワード指定なし" }}
+              {% if saved_search.location %}・{{ saved_search.location }}{% endif %}
+            </summary>
+            <form class="saved-search-form" method="post">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="update">
+              <input type="hidden" name="pk" value="{{ saved_search.pk }}">
+              <div class="search-fields">
+                <div class="field-group">
+                  <label for="saved-keyword-{{ saved_search.pk }}">キーワード</label>
+                  <input id="saved-keyword-{{ saved_search.pk }}" type="text" name="keyword" value="{{ saved_search.keyword }}">
+                </div>
+                <div class="field-group">
+                  <label for="saved-location-{{ saved_search.pk }}">開催地</label>
+                  <input id="saved-location-{{ saved_search.pk }}" type="text" name="location" value="{{ saved_search.location }}">
+                </div>
+                <div class="field-group">
+                  <label for="saved-from-{{ saved_search.pk }}">開始日</label>
+                  <input id="saved-from-{{ saved_search.pk }}" type="date" name="period_from" value="{{ saved_search.period_from|date:'Y-m-d' }}">
+                </div>
+                <div class="field-group">
+                  <label for="saved-to-{{ saved_search.pk }}">終了日</label>
+                  <input id="saved-to-{{ saved_search.pk }}" type="date" name="period_to" value="{{ saved_search.period_to|date:'Y-m-d' }}">
+                </div>
+                <div class="field-group">
+                  <label for="saved-age-min-{{ saved_search.pk }}">対象年齢の下限</label>
+                  <input id="saved-age-min-{{ saved_search.pk }}" type="number" min="0" name="age_min" value="{{ saved_search.age_min }}">
+                </div>
+                <div class="field-group">
+                  <label for="saved-age-max-{{ saved_search.pk }}">対象年齢の上限</label>
+                  <input id="saved-age-max-{{ saved_search.pk }}" type="number" min="0" name="age_max" value="{{ saved_search.age_max }}">
+                </div>
+              </div>
+              <fieldset class="tag-fieldset">
+                <legend>タグ</legend>
+                <div class="tag-options">
+                  {% for tag in all_tags %}
+                    <label class="check-chip">
+                      <input type="checkbox" name="tag" value="{{ tag.id }}" {% if tag in saved_tags %}checked{% endif %}>
+                      <span>{{ tag.name }}</span>
+                    </label>
+                  {% endfor %}
+                </div>
+              </fieldset>
+              <input type="hidden" name="notify_enabled" value="false">
+              <label class="check-row">
+                <input type="checkbox" name="notify_enabled" value="on" {% if saved_search.notify_enabled %}checked{% endif %}>
+                一致するイベントを通知する
+              </label>
+              <button class="button button-primary" type="submit">変更を保存</button>
+            </form>
+            <form class="delete-form" method="post">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="delete">
+              <input type="hidden" name="pk" value="{{ saved_search.pk }}">
+              <button class="button button-danger" type="submit">保存条件を削除</button>
+            </form>
+          </details>
+        {% endwith %}
+      {% empty %}
+        <div class="empty-state compact"><p>保存済みの検索条件はありません。</p></div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="notice-card"><a href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}">ログイン</a>すると検索条件を保存できます。</p>
+  {% endif %}
+</section>
+{% endblock %}
