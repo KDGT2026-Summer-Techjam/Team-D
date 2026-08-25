@@ -1,16 +1,16 @@
 :root {
-  --participant-bg: #f7f8f4;
+  --participant-bg: #f7f9fc;
   --participant-surface: #ffffff;
-  --participant-text: #202820;
-  --participant-muted: #657064;
-  --participant-border: #dfe5dc;
-  --participant-primary: #256d4a;
-  --participant-primary-dark: #174b33;
-  --participant-accent: #e8f3ec;
-  --participant-highlight: var(--highlight-color, #eef1e2);
+  --participant-text: #212529;
+  --participant-muted: #6c757d;
+  --participant-border: #dbe3ee;
+  --participant-primary: #0666eb;
+  --participant-primary-dark: #0052c2;
+  --participant-accent: #e8f1ff;
+  --participant-highlight: var(--highlight-color, #eef4ff);
   --participant-danger: #a33a3a;
   --participant-radius: 16px;
-  --participant-shadow: 0 12px 32px rgba(39, 66, 49, 0.09);
+  --participant-shadow: 0 12px 32px rgba(6, 60, 130, 0.09);
 }
 
 .participant-page,
@@ -116,7 +116,7 @@
 .participant-page select:focus,
 .participant-page textarea:focus {
   border-color: var(--participant-primary);
-  outline: 3px solid rgba(37, 109, 74, 0.18);
+  outline: 3px solid rgba(6, 102, 235, 0.18);
 }
 
 .participant-page textarea {
@@ -253,7 +253,7 @@
 }
 
 .image-placeholder {
-  color: rgba(32, 40, 32, 0.48);
+  color: rgba(33, 37, 41, 0.48);
   font-size: 1.05rem;
   font-weight: 800;
   letter-spacing: 0.18em;
@@ -297,7 +297,7 @@
 }
 
 .tag-muted {
-  background: #eef0ed;
+  background: #eef1f5;
   color: var(--participant-muted);
 }
 
@@ -517,7 +517,7 @@
 }
 
 .check-chip input:focus-visible + span {
-  outline: 3px solid rgba(37, 109, 74, 0.18);
+  outline: 3px solid rgba(6, 102, 235, 0.18);
 }
 
 .check-row {
