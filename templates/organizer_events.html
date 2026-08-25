@@ -1,136 +1,83 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}イベント管理 | EventMatchTechjamsummer{% endblock %}
+{% block title %}主催イベント | EventMatchTechjamsummer{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/participant.css' %}">
+{% endblock %}
 
 {% block content %}
-
-<section class="organizer-page">
-
-    <div class="page-container">
-
-        <div class="page-header">
-
-            <div>
-                <h1>イベント管理</h1>
-
-                <p>
-                    作成したイベントを管理できます。
-                </p>
-            </div>
-
-            <!-- event_create は未実装のため仮リンク -->
-            <a href="#"
-               class="button button-primary">
-                イベントを作成
-            </a>
-
-        </div>
-
-
-        {% if events %}
-
-            <div class="event-management-list">
-
-                {% for event in events %}
-
-                    <article class="management-card">
-
-                        <div class="management-card-content">
-
-                            {% if event.image %}
-
-                                <img
-                                    src="{{ event.image.url }}"
-                                    alt="{{ event.title }}"
-                                    class="event-image"
-                                >
-
-                            {% endif %}
-
-
-                            <div class="event-info">
-
-                                <h2>
-                                    {{ event.title }}
-                                </h2>
-
-                                <p>
-                                    {{ event.description }}
-                                </p>
-
-                                <p>
-                                    {{ event.start_datetime|date:"Y/m/d H:i" }}
-                                    ～
-                                    {{ event.end_datetime|date:"Y/m/d H:i" }}
-                                </p>
-
-                                <p>
-                                    {{ event.location }}
-                                </p>
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="management-actions">
-
-                            <!-- イベント詳細 -->
-                            <a
-                                href="{% url 'events:event_detail' event.id %}"
-                                class="button button-secondary"
-                            >
-                                詳細
-                            </a>
-
-                            <!-- event_edit は未実装のため仮リンク -->
-                            <a
-                                href="#"
-                                class="button button-secondary"
-                            >
-                                編集
-                            </a>
-
-                            <!-- event_delete は未実装のため仮リンク -->
-                            <a
-                                href="#"
-                                class="button button-danger"
-                            >
-                                削除
-                            </a>
-
-                        </div>
-
-                    </article>
-
-                {% endfor %}
-
-            </div>
-
-        {% else %}
-
-            <div class="empty-state">
-
-                <h2>イベントがありません</h2>
-
-                <p>
-                    まだイベントを作成していません。
-                </p>
-
-                <!-- event_create は未実装のため仮リンク -->
-                <a
-                    href="#"
-                    class="button button-primary"
-                >
-                    イベントを作成する
-                </a>
-
-            </div>
-
-        {% endif %}
-
+<section class="participant-page page-section organizer-event-page">
+  <div class="page-title-row">
+    <div>
+      <p class="eyebrow">MY EVENTS</p>
+      <h1>主催イベント</h1>
+      <p>このアカウントに割り当てられたイベントと、投稿されたレビューを確認できます。</p>
     </div>
+  </div>
 
+  {% if events %}
+    <div class="organizer-event-list">
+      {% for event in events %}
+        <article class="organizer-event-card">
+          <div class="organizer-event-image">
+            {% if event.image %}
+              <img src="{{ event.image.url }}" alt="{{ event.title }}">
+            {% else %}
+              <span class="image-placeholder" aria-hidden="true">EVENT</span>
+            {% endif %}
+          </div>
+
+          <div class="organizer-event-content">
+            <div class="organizer-event-heading">
+              <div>
+                <span class="tag">{{ event.get_status_display }}</span>
+                <h2>{{ event.title }}</h2>
+              </div>
+              <div class="organizer-review-summary" aria-label="レビュー集計">
+                <div>
+                  <strong>{{ event.review_count }}</strong>
+                  <span>レビュー</span>
+                </div>
+                <div>
+                  <strong>
+                    {% if event.average_rating is not None %}
+                      {{ event.average_rating|floatformat:1 }}
+                    {% else %}
+                      -
+                    {% endif %}
+                  </strong>
+                  <span>平均評価</span>
+                </div>
+              </div>
+            </div>
+
+            <dl class="event-meta">
+              <div>
+                <dt>開催日時</dt>
+                <dd>{{ event.start_datetime|date:"Y年n月j日 H:i" }}〜{{ event.end_datetime|date:"Y年n月j日 H:i" }}</dd>
+              </div>
+              <div>
+                <dt>開催地</dt>
+                <dd>{{ event.location|default:"未定" }}</dd>
+              </div>
+            </dl>
+
+            <div class="management-actions">
+              <a class="button button-primary" href="{% url 'events:event_detail' event.pk %}#reviews">
+                詳細・レビューを見る
+              </a>
+            </div>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <h2>割り当てられたイベントはありません</h2>
+      <p>Django管理画面でイベントの主催者にこのアカウントを設定すると、ここに表示されます。</p>
+    </div>
+  {% endif %}
 </section>
-
 {% endblock %}

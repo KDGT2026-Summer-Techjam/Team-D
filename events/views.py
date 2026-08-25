@@ -1,4 +1,6 @@
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
+from django.db.models import Avg, Count, Q
 from django.shortcuts import get_object_or_404, render
 
 from .models import Event
@@ -33,8 +35,12 @@ def event_list(request):
 
 
 def event_detail(request, pk):
+    event_filter = Q(status=Event.Status.PUBLISH)
+    if request.user.is_authenticated and request.user.is_organizer:
+        event_filter |= Q(organizer=request.user)
+
     event = get_object_or_404(
-        EventService.get_published_events()
+        Event.objects.filter(event_filter)
         .select_related("organizer")
         .prefetch_related("tags", "ratings__user"),
         pk=pk,
@@ -84,3 +90,20 @@ def my_view_history(request):
         .order_by("-viewed_at")
     )
     return render(request, "events/my_view_history.html", {"views": views})
+
+
+@login_required
+def my_organized_events(request):
+    if not request.user.is_organizer:
+        raise PermissionDenied("このページは主催者アカウントのみ利用できます。")
+
+    events = (
+        Event.objects.filter(organizer=request.user)
+        .prefetch_related("tags")
+        .annotate(
+            review_count=Count("ratings"),
+            average_rating=Avg("ratings__rating"),
+        )
+        .order_by("-start_datetime", "pk")
+    )
+    return render(request, "organizer_events.html", {"events": events})

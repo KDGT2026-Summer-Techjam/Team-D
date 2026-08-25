@@ -24,7 +24,7 @@
 
             <!-- ロゴ -->
             <a href="{% url 'core:home' %}" class="logo">
-                EventMatchTechjamsummer
+                EventMatch
             </a>
 
             <!-- ナビゲーション -->
@@ -49,6 +49,16 @@
                 </a>
 
                 {% if user.is_authenticated %}
+
+                    {% if user.is_organizer %}
+                        <a href="{% url 'events:my_organized_events' %}">
+                            主催イベント
+                        </a>
+                    {% endif %}
+
+                    <a href="{% url 'events:my_favorites' %}">
+                        お気に入り
+                    </a>
 
                     <a href="{% url 'accounts:profile' %}">
                         アカウント
@@ -145,7 +155,7 @@
 
         <div class="footer-inner">
 
-            <p>&copy; 2026 EventMatchTechjamsummer</p>
+            <p>&copy; 2026 EventMatch</p>
 
         </div>
 

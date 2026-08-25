@@ -1,6 +1,7 @@
 from django.db.models import prefetch_related_objects
 
 from search.models import SavedSearch
+from search.queries import published_events
 from search.services import MatchService
 
 from .models import Notification
@@ -71,6 +72,36 @@ class EventMatchNotifier:
         for saved_search in saved_searches:
             if not should_notify(saved_search.owner):
                 continue
+            if not MatchService.matches(saved_search, event):
+                continue
+
+            notification, created = Notification.objects.get_or_create(
+                user=saved_search.owner,
+                event=event,
+                saved_search=saved_search,
+                defaults={
+                    "message": EventMatchNotifier._message_for(
+                        saved_search=saved_search,
+                        event=event,
+                    ),
+                    "notification_type": Notification.NotificationType.MATCH,
+                },
+            )
+            if created:
+                created_notifications.append(notification)
+
+        return created_notifications
+
+    @staticmethod
+    def notify_for_saved_search(saved_search):
+        """通知設定を保存した時点で、既存の公開イベントも照合する。"""
+        if not saved_search.notify_enabled or not should_notify(saved_search.owner):
+            return []
+
+        prefetch_related_objects([saved_search], "tags")
+        created_notifications = []
+
+        for event in published_events().prefetch_related("tags"):
             if not MatchService.matches(saved_search, event):
                 continue
 

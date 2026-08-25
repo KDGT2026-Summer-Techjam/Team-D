@@ -55,7 +55,7 @@ class UserPreferenceForm(forms.ModelForm):
         queryset=Tag.objects.order_by("name"),
         required=False,
         widget=forms.CheckboxSelectMultiple,
-        help_text="選択したすべてのタグと開催地の両方に合う新着イベントを通知します。",
+        help_text="選択したいずれかのタグと開催地の両方に合うイベントを通知します。",
     )
 
     class Meta:
@@ -90,7 +90,7 @@ class UserPreferenceForm(forms.ModelForm):
     def save(self, commit=True):
         preference = super().save(commit=commit)
         if commit:
-            SavedSearchService.sync_notification_preference(
+            saved_search = SavedSearchService.sync_notification_preference(
                 owner=preference.user,
                 location=preference.desired_location,
                 tag_ids=self.cleaned_data["notification_tags"].values_list(
@@ -98,6 +98,11 @@ class UserPreferenceForm(forms.ModelForm):
                 ),
                 notify_enabled=preference.notifications_enabled,
             )
+            if saved_search is not None:
+                # 設定保存前から存在するイベントも、その場で照合して通知へ反映する。
+                from notifications.services import EventMatchNotifier
+
+                EventMatchNotifier.notify_for_saved_search(saved_search)
         return preference
 
 

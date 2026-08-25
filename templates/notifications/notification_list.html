@@ -30,6 +30,7 @@
         {% for notification in notifications %}
             <article class="notification-item {% if not notification.is_read %}unread{% endif %}">
                 <div class="notification-content">
+                    <h2 class="notification-event-title">{{ notification.event.title }}</h2>
                     <p class="notification-message">{{ notification.message }}</p>
                     <small class="notification-date">{{ notification.created_at }}</small>
                     <a
