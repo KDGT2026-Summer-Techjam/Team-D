@@ -67,6 +67,8 @@ class ParticipantUiTests(TestCase):
         response = self.client.get(reverse("core:home"))
 
         self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "EventMatchTechjamsummer")
+        self.assertNotContains(response, "TechJamSummer")
         self.assertContains(response, self.upcoming_event.title)
         self.assertNotContains(response, self.finished_event.title)
         self.assertNotContains(response, self.draft_event.title)
@@ -81,6 +83,7 @@ class ParticipantUiTests(TestCase):
         self.assertContains(response, reverse("accounts:preferences"), count=1)
         self.assertContains(response, 'class="settings-button"')
         self.assertContains(response, 'aria-label="設定"')
+        self.assertContains(response, "/static/images/settings-gear.jpg")
         # ホームへのリンクはヘッダーのロゴとメニューだけで、フッターには置かない。
         self.assertEqual(html.count('href="/"'), 2)
 
