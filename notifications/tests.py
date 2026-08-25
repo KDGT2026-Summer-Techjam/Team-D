@@ -15,7 +15,7 @@ User = get_user_model()
 
 
 def _make_event(*, organizer, title="イベント", status=Event.Status.PUBLISH,
-                 start_offset_days=1, duration_days=1):
+                 start_offset_days=1, duration_days=1, location=""):
     start = timezone.now() + timedelta(days=start_offset_days)
     end = start + timedelta(days=duration_days)
     return Event.objects.create(
@@ -23,6 +23,7 @@ def _make_event(*, organizer, title="イベント", status=Event.Status.PUBLISH,
         organizer=organizer,
         start_datetime=start,
         end_datetime=end,
+        location=location,
         status=status,
     )
 
@@ -196,6 +197,103 @@ class NotificationViewTests(TestCase):
         response = self.client.get(reverse("notifications:notification_list"))
 
         self.assertContains(response, reverse("events:event_detail", args=[self.event.pk]))
+
+
+class AutomaticPreferenceNotificationTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(
+            email="automatic-notify@example.com", password="pass12345"
+        )
+        self.organizer = User.objects.create_user(
+            email="automatic-organizer@example.com", password="pass12345"
+        )
+        self.outdoor = Tag.objects.create(name="自動通知・屋外")
+
+    def test_new_published_event_matching_location_creates_notification(self):
+        SavedSearchService.sync_notification_preference(
+            owner=self.owner,
+            location="東京都",
+            notify_enabled=True,
+        )
+
+        event = _make_event(
+            organizer=self.organizer,
+            title="東京の新着イベント",
+            location="東京都新宿区",
+        )
+
+        notification = Notification.objects.get(user=self.owner, event=event)
+        self.assertIn("東京都", notification.message)
+
+    def test_adding_matching_tag_to_published_event_creates_notification(self):
+        SavedSearchService.sync_notification_preference(
+            owner=self.owner,
+            location="",
+            tag_ids=[self.outdoor.pk],
+            notify_enabled=True,
+        )
+        event = _make_event(
+            organizer=self.organizer,
+            title="屋外の新着イベント",
+        )
+
+        self.assertFalse(Notification.objects.filter(user=self.owner).exists())
+        event.tags.add(self.outdoor)
+
+        self.assertTrue(
+            Notification.objects.filter(user=self.owner, event=event).exists()
+        )
+
+    def test_location_and_tag_must_both_match(self):
+        SavedSearchService.sync_notification_preference(
+            owner=self.owner,
+            location="東京都",
+            tag_ids=[self.outdoor.pk],
+            notify_enabled=True,
+        )
+        event = _make_event(
+            organizer=self.organizer,
+            title="開催地だけ一致するイベント",
+            location="東京都渋谷区",
+        )
+
+        self.assertFalse(Notification.objects.filter(user=self.owner).exists())
+
+    def test_matching_location_and_tag_create_notification(self):
+        SavedSearchService.sync_notification_preference(
+            owner=self.owner,
+            location="東京都",
+            tag_ids=[self.outdoor.pk],
+            notify_enabled=True,
+        )
+        event = _make_event(
+            organizer=self.organizer,
+            title="東京の屋外イベント",
+            location="東京都調布市",
+        )
+
+        self.assertFalse(Notification.objects.filter(user=self.owner).exists())
+        event.tags.add(self.outdoor)
+
+        self.assertTrue(
+            Notification.objects.filter(user=self.owner, event=event).exists()
+        )
+
+    def test_disabled_notifications_do_not_create_notification(self):
+        SavedSearchService.sync_notification_preference(
+            owner=self.owner,
+            location="東京都",
+            notify_enabled=False,
+        )
+        event = _make_event(
+            organizer=self.organizer,
+            title="通知OFF時のイベント",
+            location="東京都港区",
+        )
+
+        self.assertFalse(
+            Notification.objects.filter(user=self.owner, event=event).exists()
+        )
 
 
 class EventMatchNotifierTests(TestCase):

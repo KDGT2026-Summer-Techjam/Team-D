@@ -1,6 +1,9 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 
+from events.models import Tag
+from search.services import SavedSearchService
+
 from .models import User, UserPreference
 
 
@@ -47,9 +50,55 @@ class ProfileForm(forms.ModelForm):
 
 
 class UserPreferenceForm(forms.ModelForm):
+    notification_tags = forms.ModelMultipleChoiceField(
+        label="通知するタグ",
+        queryset=Tag.objects.order_by("name"),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        help_text="選択したタグのいずれかと開催地の両方に合う新着イベントを通知します。",
+    )
+
     class Meta:
         model = UserPreference
         fields = ("desired_location", "notifications_enabled", "theme_color")
+        labels = {
+            "desired_location": "通知する開催地",
+        }
+        help_texts = {
+            "desired_location": "例：東京都、大阪市。イベントの開催地に部分一致します。",
+            "notifications_enabled": "開催地・タグに一致した新着イベントを通知します。",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.order_fields(
+            (
+                "desired_location",
+                "notification_tags",
+                "notifications_enabled",
+                "theme_color",
+            )
+        )
+
+        if self.instance and self.instance.user_id:
+            saved_search = SavedSearchService.get_notification_preference(
+                owner=self.instance.user
+            )
+            if saved_search is not None:
+                self.initial["notification_tags"] = saved_search.tags.all()
+
+    def save(self, commit=True):
+        preference = super().save(commit=commit)
+        if commit:
+            SavedSearchService.sync_notification_preference(
+                owner=preference.user,
+                location=preference.desired_location,
+                tag_ids=self.cleaned_data["notification_tags"].values_list(
+                    "pk", flat=True
+                ),
+                notify_enabled=preference.notifications_enabled,
+            )
+        return preference
 
 
 class AccountDeletionForm(forms.Form):

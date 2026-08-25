@@ -144,7 +144,12 @@ def _handle_update(request):
 
     # ownerで絞り込んで取得することで、他人のSavedSearchに対しては
     # 「存在するかどうか」自体を判別できない404にする(存在確認オラクル化を防ぐ)。
-    saved_search = get_object_or_404(SavedSearch, pk=pk, owner=request.user)
+    saved_search = get_object_or_404(
+        SavedSearch,
+        pk=pk,
+        owner=request.user,
+        source=SavedSearch.Source.MANUAL,
+    )
 
     try:
         SavedSearchService.update(
@@ -178,7 +183,12 @@ def _handle_delete(request):
         return error_response
 
     # updateと同様、owner絞り込みで他人のSavedSearchは404にする。
-    saved_search = get_object_or_404(SavedSearch, pk=pk, owner=request.user)
+    saved_search = get_object_or_404(
+        SavedSearch,
+        pk=pk,
+        owner=request.user,
+        source=SavedSearch.Source.MANUAL,
+    )
 
     try:
         SavedSearchService.delete(saved_search=saved_search, user=request.user)
@@ -229,7 +239,10 @@ def search_results(request):
 
     saved_searches = SavedSearch.objects.none()
     if request.user.is_authenticated:
-        saved_searches = SavedSearch.objects.filter(owner=request.user)
+        saved_searches = SavedSearch.objects.filter(
+            owner=request.user,
+            source=SavedSearch.Source.MANUAL,
+        )
 
     context = {
         "events": events,

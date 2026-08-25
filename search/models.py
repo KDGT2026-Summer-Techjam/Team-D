@@ -6,10 +6,20 @@ from django.db import models
 
 class SavedSearch(models.Model):
     #ユーザーが保存した検索条件。一致する新着イベントの通知トリガーとなる。
+    class Source(models.TextChoices):
+        MANUAL = "manual", "検索画面"
+        PREFERENCE = "preference", "通知設定"
+
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="saved_searches",
+    )
+
+    source = models.CharField(
+        max_length=20,
+        choices=Source.choices,
+        default=Source.MANUAL,
     )
 
     keyword = models.CharField(max_length=100, blank=True)
@@ -38,6 +48,13 @@ class SavedSearch(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["owner"],
+                condition=models.Q(source="preference"),
+                name="unique_preference_search_per_user",
+            )
+        ]
 
     def __str__(self):
         return f"{self.owner} - {self.keyword or '(キーワードなし)'}"

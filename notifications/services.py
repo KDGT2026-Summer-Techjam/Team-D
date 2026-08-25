@@ -79,9 +79,9 @@ class EventMatchNotifier:
                 event=event,
                 saved_search=saved_search,
                 defaults={
-                    "message": (
-                        f"「{saved_search.keyword or event.title}」の条件に"
-                        "一致するイベントが見つかりました。"
+                    "message": EventMatchNotifier._message_for(
+                        saved_search=saved_search,
+                        event=event,
                     ),
                     "notification_type": Notification.NotificationType.MATCH,
                 },
@@ -90,3 +90,19 @@ class EventMatchNotifier:
                 created_notifications.append(notification)
 
         return created_notifications
+
+    @staticmethod
+    def _message_for(*, saved_search, event):
+        if saved_search.source == SavedSearch.Source.PREFERENCE:
+            conditions = []
+            if saved_search.location:
+                conditions.append(saved_search.location)
+            tag_names = [tag.name for tag in saved_search.tags.all()]
+            conditions.extend(tag_names)
+            summary = "・".join(conditions) or event.title
+            return f"設定した「{summary}」に一致する新着イベントが見つかりました。"
+
+        return (
+            f"「{saved_search.keyword or event.title}」の条件に"
+            "一致するイベントが見つかりました。"
+        )

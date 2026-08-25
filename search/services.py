@@ -82,6 +82,51 @@ class SavedSearchService:
             raise PermissionError("この保存検索を削除する権限がありません。")
         saved_search.delete()
 
+    @staticmethod
+    def get_notification_preference(*, owner):
+        return (
+            SavedSearch.objects.filter(
+                owner=owner,
+                source=SavedSearch.Source.PREFERENCE,
+            )
+            .prefetch_related("tags")
+            .first()
+        )
+
+    @staticmethod
+    def sync_notification_preference(
+        *, owner, location, tag_ids=None, notify_enabled=True
+    ):
+        """設定画面の開催地・タグを通知専用の保存条件へ同期する。"""
+        location = (location or "").strip()
+        tag_ids = list(tag_ids or [])
+        saved_search = SavedSearchService.get_notification_preference(owner=owner)
+
+        # 条件が空なら全イベント通知にはせず、専用条件自体を削除する。
+        if not location and not tag_ids:
+            if saved_search is not None:
+                saved_search.delete()
+            return None
+
+        if saved_search is None:
+            saved_search = SavedSearch(
+                owner=owner,
+                source=SavedSearch.Source.PREFERENCE,
+            )
+
+        saved_search.keyword = ""
+        saved_search.location = location
+        saved_search.period_from = None
+        saved_search.period_to = None
+        saved_search.age_min = None
+        saved_search.age_max = None
+        saved_search.priority = ""
+        saved_search.notify_enabled = notify_enabled
+        saved_search.full_clean()
+        saved_search.save()
+        saved_search.tags.set(tag_ids)
+        return saved_search
+
 
 class MatchService:
     #保存検索とイベントが一致するかどうかを判定するサービス。

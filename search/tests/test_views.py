@@ -3,6 +3,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from search.models import SavedSearch
+from search.services import SavedSearchService
 
 User = get_user_model()
 
@@ -213,3 +214,49 @@ class SavedSearchNotifyEnabledDefaultTests(TestCase):
         self.assertEqual(response.status_code, 302)
         saved_search.refresh_from_db()
         self.assertFalse(saved_search.notify_enabled)
+
+
+class PreferenceSavedSearchVisibilityTests(TestCase):
+    def test_search_page_does_not_show_settings_generated_condition(self):
+        owner = User.objects.create_user(
+            email="hidden-preference@example.com", password="pass12345"
+        )
+        manual = SavedSearch.objects.create(owner=owner, keyword="花火")
+        preference = SavedSearchService.sync_notification_preference(
+            owner=owner,
+            location="東京都",
+            notify_enabled=True,
+        )
+        self.client.force_login(owner)
+
+        response = self.client.get(reverse("search:search_results"))
+
+        self.assertQuerySetEqual(
+            response.context["saved_searches"],
+            [manual],
+        )
+        self.assertNotContains(response, f'name="pk" value="{preference.pk}"')
+
+    def test_search_page_cannot_update_settings_generated_condition(self):
+        owner = User.objects.create_user(
+            email="protected-preference@example.com", password="pass12345"
+        )
+        preference = SavedSearchService.sync_notification_preference(
+            owner=owner,
+            location="東京都",
+            notify_enabled=True,
+        )
+        self.client.force_login(owner)
+
+        response = self.client.post(
+            reverse("search:search_results"),
+            {
+                "action": "update",
+                "pk": preference.pk,
+                "location": "大阪府",
+            },
+        )
+
+        self.assertEqual(response.status_code, 404)
+        preference.refresh_from_db()
+        self.assertEqual(preference.location, "東京都")

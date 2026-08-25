@@ -4,6 +4,13 @@ from .models import SavedSearch
 
 @admin.register(SavedSearch)
 class SavedSearchAdmin(admin.ModelAdmin):
-    list_display = ("owner", "keyword", "location", "notify_enabled", "created_at")
-    list_filter = ("notify_enabled",)
+    list_display = (
+        "owner",
+        "source",
+        "keyword",
+        "location",
+        "notify_enabled",
+        "created_at",
+    )
+    list_filter = ("source", "notify_enabled")
     search_fields = ("keyword", "location")

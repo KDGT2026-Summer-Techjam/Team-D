@@ -11,7 +11,7 @@
         <h1>設定</h1>
 
         <p>
-            通知などの設定を変更できます。
+            開催地とタグを登録すると、条件に合う新しいイベントを通知します。
         </p>
 
     </div>
@@ -39,31 +39,28 @@
                         {% endif %}
                     </div>
 
-                    {{ field }}
+                    {% if field.name == "notification_tags" %}
+                        <div class="preference-tag-options">
+                            {% for option in field %}
+                                <label class="preference-tag-option">
+                                    {{ option.tag }}
+                                    <span>{{ option.choice_label }}</span>
+                                </label>
+                            {% empty %}
+                                <p class="help-text">選択できるタグはまだありません。</p>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {{ field }}
+                    {% endif %}
+
+                    {% if field.errors %}
+                        <div class="field-error">{{ field.errors }}</div>
+                    {% endif %}
 
                 </div>
 
             {% endfor %}
-
-        {% else %}
-
-            <div class="setting-item">
-
-                <div>
-                    <strong>通知を受け取る</strong>
-
-                    <p class="help-text">
-                        イベントに関する通知を受け取ります。
-                    </p>
-                </div>
-
-                <input
-                    type="checkbox"
-                    name="notification_enabled"
-                    checked
-                >
-
-            </div>
 
         {% endif %}
 

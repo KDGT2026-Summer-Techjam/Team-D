@@ -2,6 +2,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from accounts.models import User
+from events.models import Tag
 
 
 class AccountViewTests(TestCase):
@@ -80,3 +81,19 @@ class AccountViewTests(TestCase):
 
         self.assertRedirects(response, reverse("core:home"), fetch_redirect_response=False)
         self.assertFalse(User.objects.filter(pk=user_id).exists())
+
+    def test_preferences_page_shows_location_and_tag_settings(self):
+        user = User.objects.create_user(
+            email="preference-page@example.com",
+            password="SafePassword123!",
+            name="設定画面確認",
+        )
+        Tag.objects.create(name="子ども向け")
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("accounts:preferences"))
+
+        self.assertContains(response, "通知する開催地")
+        self.assertContains(response, 'name="desired_location"')
+        self.assertContains(response, 'name="notification_tags"')
+        self.assertContains(response, "子ども向け")
