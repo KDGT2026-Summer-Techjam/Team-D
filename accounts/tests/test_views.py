@@ -5,6 +5,36 @@ from accounts.models import User
 
 
 class AccountViewTests(TestCase):
+    def test_login_uses_email_form_and_custom_template(self):
+        response = self.client.get(reverse("accounts:login"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "accounts/login.html")
+        self.assertContains(response, 'type="email"')
+        self.assertContains(response, "css/login.css")
+
+    def test_login_with_email_succeeds(self):
+        user = User.objects.create_user(
+            email="login@example.com",
+            password="SafePassword123!",
+            name="ログイン確認",
+        )
+
+        response = self.client.post(
+            reverse("accounts:login"),
+            data={
+                "username": "login@example.com",
+                "password": "SafePassword123!",
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("accounts:profile"),
+            fetch_redirect_response=False,
+        )
+        self.assertEqual(int(self.client.session["_auth_user_id"]), user.pk)
+
     def test_profile_requires_login(self):
         response = self.client.get(reverse("accounts:profile"))
 

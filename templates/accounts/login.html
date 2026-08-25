@@ -1,82 +1,56 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}ログイン | TechJamSummer{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/login.css' %}">
+{% endblock %}
+
 {% block content %}
+<section class="login-container">
+  <div class="login-card">
+    <header class="login-header">
+      <h1>ログイン</h1>
+      <p>登録したメールアドレスとパスワードを入力してください。</p>
+    </header>
 
-<section class="form-page">
+    <form class="login-form" method="post">
+      {% csrf_token %}
 
-    <div class="form-card">
-
-        <h1>ログイン</h1>
-
-        <p class="form-description">
-            TechJamSummerにログインしてください。
-        </p>
-
-        <form method="post">
-
-            {% csrf_token %}
-
-            {% if form.non_field_errors %}
-                <div class="form-error">
-                    {{ form.non_field_errors }}
-                </div>
-            {% endif %}
-
-            <div class="form-group">
-                <label for="{{ form.username.id_for_label }}">
-                    メールアドレス
-                </label>
-
-                {{ form.username }}
-
-                {% if form.username.errors %}
-                    <div class="field-error">
-                        {{ form.username.errors }}
-                    </div>
-                {% endif %}
-            </div>
-
-
-            <div class="form-group">
-
-                <label for="{{ form.password.id_for_label }}">
-                    パスワード
-                </label>
-
-                {{ form.password }}
-
-                {% if form.password.errors %}
-                    <div class="field-error">
-                        {{ form.password.errors }}
-                    </div>
-                {% endif %}
-
-            </div>
-
-
-            <button type="submit" class="button button-primary">
-                ログイン
-            </button>
-
-        </form>
-
-
-        <div class="form-footer">
-
-            <p>
-                アカウントをお持ちでない方
-            </p>
-
-            <a href="{% url 'accounts:signup' %}" class="text-link">
-                アカウントを作成する
-            </a>
-
+      {% if form.non_field_errors %}
+        <div class="login-error" role="alert">
+          {{ form.non_field_errors }}
         </div>
+      {% endif %}
 
+      <div class="form-group">
+        <label for="{{ form.username.id_for_label }}">メールアドレス</label>
+        {{ form.username }}
+        {% if form.username.errors %}
+          <div class="field-error" role="alert">{{ form.username.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-group">
+        <label for="{{ form.password.id_for_label }}">パスワード</label>
+        {{ form.password }}
+        {% if form.password.errors %}
+          <div class="field-error" role="alert">{{ form.password.errors }}</div>
+        {% endif %}
+      </div>
+
+      {% if next %}
+        <input type="hidden" name="next" value="{{ next }}">
+      {% endif %}
+
+      <button type="submit" class="login-button">ログイン</button>
+    </form>
+
+    <div class="signup-link">
+      <p>アカウントをお持ちでない方</p>
+      <a href="{% url 'accounts:signup' %}">アカウントを作成する</a>
     </div>
-
+  </div>
 </section>
-
 {% endblock %}

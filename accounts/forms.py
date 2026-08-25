@@ -1,7 +1,25 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 
 from .models import User, UserPreference
+
+
+class EmailAuthenticationForm(AuthenticationForm):
+    username = forms.EmailField(
+        label="メールアドレス",
+        widget=forms.EmailInput(
+            attrs={
+                "autocomplete": "email",
+                "autofocus": True,
+                "placeholder": "example@example.com",
+            }
+        ),
+    )
+    password = forms.CharField(
+        label="パスワード",
+        strip=False,
+        widget=forms.PasswordInput(attrs={"autocomplete": "current-password"}),
+    )
 
 
 class RegistrationForm(UserCreationForm):
