@@ -1,7 +1,7 @@
 from django.db.models import Q
 from django.utils import timezone
 
-from .logic import age_ranges_overlap, is_criteria_empty, period_overlaps
+from .logic import is_criteria_empty, period_overlaps
 from .models import SavedSearch
 from .queries import published_events
 
@@ -30,17 +30,6 @@ class SearchService:
 
         if criteria.period_to is not None:
             queryset = queryset.filter(start_datetime__date__lte=criteria.period_to)
-
-        # 対象年齢の重なり判定（logic.age_ranges_overlapと同じ境界解釈に揃える）
-        if criteria.age_min is not None:
-            queryset = queryset.filter(
-                Q(max_age__isnull=True) | Q(max_age__gte=criteria.age_min)
-            )
-
-        if criteria.age_max is not None:
-            queryset = queryset.filter(
-                Q(min_age__isnull=True) | Q(min_age__lte=criteria.age_max)
-            )
 
         tag_ids = list(criteria.tag_ids)
         if tag_ids:
@@ -154,11 +143,6 @@ class MatchService:
             saved_search.period_to,
             timezone.localtime(event.start_datetime).date(),
             timezone.localtime(event.end_datetime).date(),
-        ):
-            return False
-
-        if not age_ranges_overlap(
-            saved_search.age_min, saved_search.age_max, event.min_age, event.max_age
         ):
             return False
 

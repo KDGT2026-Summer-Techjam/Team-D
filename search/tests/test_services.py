@@ -101,17 +101,6 @@ class SearchServiceTests(TestCase):
         self.assertIn(overlapping, results)
         self.assertNotIn(outside, results)
 
-    def test_age_range_filter(self):
-        matching = _make_event(organizer=self.organizer, min_age=3, max_age=6)
-        no_limit = _make_event(organizer=self.organizer, min_age=None, max_age=None)
-        outside = _make_event(organizer=self.organizer, min_age=10, max_age=12)
-
-        results = SearchService.search(SearchCriteria(age_min=4, age_max=5))
-
-        self.assertIn(matching, results)
-        self.assertIn(no_limit, results)
-        self.assertNotIn(outside, results)
-
     def test_tag_filter(self):
         matching = _make_event(organizer=self.organizer, tags=[self.outdoor])
         non_matching = _make_event(organizer=self.organizer, tags=[self.indoor])
@@ -219,8 +208,6 @@ class MatchServiceTests(TestCase):
             owner=self.owner,
             keyword="夏祭り",
             location="東京",
-            age_min=4,
-            age_max=5,
             tag_ids=[self.tag.id],
         )
 
@@ -270,8 +257,6 @@ class MatchServiceTests(TestCase):
             owner=self.owner,
             keyword="夏祭り",
             location="東京",
-            age_min=4,
-            age_max=5,
             tag_ids=[self.tag.id],
         )
         criteria = SearchCriteria(
@@ -279,8 +264,6 @@ class MatchServiceTests(TestCase):
             location=saved_search.location,
             period_from=saved_search.period_from,
             period_to=saved_search.period_to,
-            age_min=saved_search.age_min,
-            age_max=saved_search.age_max,
             tag_ids=list(saved_search.tags.values_list("id", flat=True)),
         )
         search_results = SearchService.search(criteria)
@@ -291,6 +274,21 @@ class MatchServiceTests(TestCase):
                 MatchService.matches(saved_search, event),
                 msg=f"event={event.title} でSearchServiceとMatchServiceの判定が食い違っています。",
             )
+
+    def test_legacy_saved_age_values_do_not_filter_matches(self):
+        event = _make_event(
+            organizer=self.owner,
+            title="大人向けイベント",
+            min_age=20,
+            max_age=30,
+        )
+        saved_search = SavedSearch.objects.create(
+            owner=self.owner,
+            age_min=3,
+            age_max=5,
+        )
+
+        self.assertTrue(MatchService.matches(saved_search, event))
 
     def test_search_service_and_match_service_agree_on_jst_date_boundary(self):
         """タイムゾーン境界（JST 00:00〜09:00 = UTC前日）でも両者の判定が一致することを保証する。

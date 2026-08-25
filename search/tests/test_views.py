@@ -8,6 +8,41 @@ from search.services import SavedSearchService
 User = get_user_model()
 
 
+class AgeSearchRemovedTests(TestCase):
+    def setUp(self):
+        self.url = reverse("search:search_results")
+
+    def test_search_page_has_no_age_inputs(self):
+        response = self.client.get(self.url)
+
+        self.assertNotContains(response, 'name="age_min"')
+        self.assertNotContains(response, 'name="age_max"')
+        self.assertNotContains(response, "対象年齢の下限")
+        self.assertNotContains(response, "対象年齢の上限")
+
+    def test_posted_age_values_are_not_saved_as_search_conditions(self):
+        owner = User.objects.create_user(
+            email="age-removed@example.com",
+            password="pass12345",
+        )
+        self.client.force_login(owner)
+
+        response = self.client.post(
+            self.url,
+            {
+                "action": "create",
+                "keyword": "花火",
+                "age_min": "3",
+                "age_max": "10",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        saved_search = SavedSearch.objects.get(owner=owner)
+        self.assertIsNone(saved_search.age_min)
+        self.assertIsNone(saved_search.age_max)
+
+
 class SearchResultsPostDispatchTests(TestCase):
     #POST側の共通ディスパッチ(認証・action判定)の振る舞いを検証する。
     def setUp(self):

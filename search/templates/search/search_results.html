@@ -36,14 +36,6 @@
         <input type="date" id="id_period_to" name="period_to" value="{{ criteria.period_to|date:'Y-m-d' }}">
       </div>
       <div class="field-group">
-        <label for="id_age_min">対象年齢の下限</label>
-        <input type="number" min="0" id="id_age_min" name="age_min" value="{{ criteria.age_min }}" placeholder="0">
-      </div>
-      <div class="field-group">
-        <label for="id_age_max">対象年齢の上限</label>
-        <input type="number" min="0" id="id_age_max" name="age_max" value="{{ criteria.age_max }}" placeholder="上限なし">
-      </div>
-      <div class="field-group">
         <label for="id_sort">並べ替え</label>
         <select id="id_sort" name="sort">
           <option value="start_asc" {% if selected_sort == "start_asc" %}selected{% endif %}>開催日が近い順</option>
@@ -107,8 +99,6 @@
         <input type="hidden" name="location" value="{{ criteria.location }}">
         <input type="hidden" name="period_from" value="{{ criteria.period_from|date:'Y-m-d' }}">
         <input type="hidden" name="period_to" value="{{ criteria.period_to|date:'Y-m-d' }}">
-        <input type="hidden" name="age_min" value="{{ criteria.age_min }}">
-        <input type="hidden" name="age_max" value="{{ criteria.age_max }}">
         {% for tag_id in criteria.tag_ids %}
           <input type="hidden" name="tag" value="{{ tag_id }}">
         {% endfor %}
@@ -150,14 +140,6 @@
                 <div class="field-group">
                   <label for="saved-to-{{ saved_search.pk }}">終了日</label>
                   <input id="saved-to-{{ saved_search.pk }}" type="date" name="period_to" value="{{ saved_search.period_to|date:'Y-m-d' }}">
-                </div>
-                <div class="field-group">
-                  <label for="saved-age-min-{{ saved_search.pk }}">対象年齢の下限</label>
-                  <input id="saved-age-min-{{ saved_search.pk }}" type="number" min="0" name="age_min" value="{{ saved_search.age_min }}">
-                </div>
-                <div class="field-group">
-                  <label for="saved-age-max-{{ saved_search.pk }}">対象年齢の上限</label>
-                  <input id="saved-age-max-{{ saved_search.pk }}" type="number" min="0" name="age_max" value="{{ saved_search.age_max }}">
                 </div>
               </div>
               <fieldset class="tag-fieldset">

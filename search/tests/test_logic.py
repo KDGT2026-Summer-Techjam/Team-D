@@ -3,7 +3,7 @@ import unittest
 from datetime import date
 
 from search.criteria import SearchCriteria
-from search.logic import age_ranges_overlap, is_criteria_empty, period_overlaps
+from search.logic import is_criteria_empty, period_overlaps
 
 
 class PeriodOverlapsTests(unittest.TestCase):
@@ -52,24 +52,6 @@ class PeriodOverlapsTests(unittest.TestCase):
         )
 
 
-class AgeRangesOverlapTests(unittest.TestCase):
-    def test_both_unbounded(self):
-        self.assertTrue(age_ranges_overlap(None, None, None, None))
-
-    def test_overlapping(self):
-        self.assertTrue(age_ranges_overlap(3, 6, 5, 10))
-
-    def test_touching_boundaries_count_as_overlap(self):
-        self.assertTrue(age_ranges_overlap(3, 6, 6, 10))
-
-    def test_non_overlapping(self):
-        self.assertFalse(age_ranges_overlap(3, 6, 7, 10))
-
-    def test_one_sided_bounds(self):
-        self.assertTrue(age_ranges_overlap(None, 6, 5, None))
-        self.assertFalse(age_ranges_overlap(None, 6, 7, None))
-
-
 class IsCriteriaEmptyTests(unittest.TestCase):
     def test_default_criteria_is_empty(self):
         self.assertTrue(is_criteria_empty(SearchCriteria()))
@@ -89,12 +71,6 @@ class IsCriteriaEmptyTests(unittest.TestCase):
         self.assertFalse(
             is_criteria_empty(SearchCriteria(period_to=date(2026, 1, 1)))
         )
-
-    def test_age_min_makes_non_empty(self):
-        self.assertFalse(is_criteria_empty(SearchCriteria(age_min=3)))
-
-    def test_age_max_makes_non_empty(self):
-        self.assertFalse(is_criteria_empty(SearchCriteria(age_max=10)))
 
     def test_tags_makes_non_empty(self):
         self.assertFalse(is_criteria_empty(SearchCriteria(tag_ids=[1])))

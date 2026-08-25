@@ -10,7 +10,7 @@
 
 `search`/`notifications`アプリは、以下の一連の機能を提供する。
 
-- **公開イベント検索**: キーワード・場所・開催期間・対象年齢・タグで、公開中(下書き・
+- **公開イベント検索**: キーワード・場所・開催期間・タグで、公開中(下書き・
   中止を除く)のイベントを絞り込む。
 - **保存検索(SavedSearch)のCRUD**: ログインユーザーが検索条件を保存し、後から
   編集・削除できる。
@@ -48,8 +48,6 @@ POST(保存検索のCRUD)を同一URL・同一ビュー(`search_results`)で処�
 | `location` | 文字列 | イベントの`location`に部分一致(大小無視) |
 | `period_from` | 日付(`YYYY-MM-DD`) | 開催期間の下限。不正な形式は無視されNone扱い |
 | `period_to` | 日付(`YYYY-MM-DD`) | 開催期間の上限。不正な形式は無視されNone扱い |
-| `age_min` | 整数 | 対象年齢の下限。不正な値は無視されNone扱い |
-| `age_max` | 整数 | 対象年齢の上限。不正な値は無視されNone扱い |
 | `tag` | 整数(複数指定可) | タグID。複数指定時はOR(いずれかのタグを持つイベント) |
 
 レスポンスのcontext: `events`(検索結果のQuerySet)、`criteria`(組み立てられた
@@ -70,8 +68,6 @@ POST(保存検索のCRUD)を同一URL・同一ビュー(`search_results`)で処�
 | `location` | 任意 | `keyword`と同様 |
 | `period_from` | 任意 | `create`: 省略時はNone。`update`: キー自体が無ければ既存値維持、キーがあれば(空文字でも)パース結果(不正・空文字はNone)で上書き |
 | `period_to` | 任意 | `period_from`と同様 |
-| `age_min` | 任意 | `period_from`と同様(整数として解釈) |
-| `age_max` | 任意 | `period_from`と同様 |
 | `tag` | 任意(複数指定可) | タグID。`create`: 省略時は空。`update`: `tag`キーが1つも無ければ既存のタグ構成を維持、1つでもあればその内容で全置換 |
 | `notify_enabled` | 任意 | `"on"`/`"true"`/`"1"`/`"True"`/`"yes"`のみTrue、それ以外は明示的にFalse。**`create`でキー自体が無い場合はモデルのdefault=Trueを維持**(意図せずOFFにしないため)。`update`でキー自体が無い場合は既存値を維持 |
 
@@ -103,8 +99,8 @@ Djangoの既定ログインURL(`/accounts/login/`)へ302リダイレクトされ
 | `location` | `CharField(max_length=255)` | `blank=True` | `""` | |
 | `period_from` | `DateField` | `null=True, blank=True` | `None` | 未指定=期間制限なし |
 | `period_to` | `DateField` | `null=True, blank=True` | `None` | 未指定=期間制限なし |
-| `age_min` | `PositiveIntegerField` | `null=True, blank=True` | `None` | 未指定=年齢制限なし |
-| `age_max` | `PositiveIntegerField` | `null=True, blank=True` | `None` | 未指定=年齢制限なし |
+| `age_min` | `PositiveIntegerField` | `null=True, blank=True` | `None` | 互換性維持用の旧項目。検索・通知では使用しない |
+| `age_max` | `PositiveIntegerField` | `null=True, blank=True` | `None` | 互換性維持用の旧項目。検索・通知では使用しない |
 | `tags` | `ManyToManyField("events.Tag")` | `blank=True` | - | `related_name="saved_searches"`。中間モデルなし(素のM2M) |
 | `priority` | `CharField(max_length=20)` | `blank=True` | `""` | 未使用の予約フィールド(choices未確定) |
 | `notify_enabled` | `BooleanField` | - | `True` | Falseなら`EventMatchNotifier`の走査対象外 |
@@ -114,7 +110,7 @@ Djangoの既定ログインURL(`/accounts/login/`)へ302リダイレクトされ
 `Meta.ordering = ["-created_at"]`。`clean()`で以下を検証(`full_clean()`経由、
 `SavedSearchService`が呼び出す):
 - `period_from > period_to`なら`ValidationError`
-- `age_min > age_max`なら`ValidationError`
+- 旧データの整合性維持のため、`age_min > age_max`なら`ValidationError`
 
 ### 3.2 `Notification`(`notifications/models.py`)
 
@@ -152,7 +148,7 @@ Djangoの既定ログインURL(`/accounts/login/`)へ302リダイレクトされ
 - **`MatchService.matches(saved_search, event) -> bool`**
   `saved_search`と`event`が条件的に一致するかどうかを判定する。
   `SearchService.search()`のSQLフィルタと同じ判定基準になるよう、`search/logic.py`
-  の`period_overlaps`/`age_ranges_overlap`を共有している。
+  の`period_overlaps`を共有している。年齢条件は検索・通知の対象外。
 
 ### `notifications/services.py`
 

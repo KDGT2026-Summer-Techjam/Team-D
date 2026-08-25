@@ -29,7 +29,7 @@ class SavedSearch(models.Model):
     period_from = models.DateField(null=True, blank=True)
     period_to = models.DateField(null=True, blank=True)
 
-    # 対象年齢の範囲。任意項目（未指定=年齢制限なし）
+    # 旧バージョンとのDB互換性用。検索・通知の判定には使用しない。
     age_min = models.PositiveIntegerField(null=True, blank=True)
     age_max = models.PositiveIntegerField(null=True, blank=True)
 
