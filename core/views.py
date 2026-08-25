@@ -5,10 +5,6 @@ def home(request):
     return render(request, "core/home.html")
 
 
-def search_results(request):
-    return render(request, "core/search_results.html")
-
-
 def event_create(request):
     return render(request, "core/event_form.html")
 

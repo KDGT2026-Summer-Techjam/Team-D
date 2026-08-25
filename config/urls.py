@@ -10,6 +10,10 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("accounts/", include("accounts.urls")),
     path("", include("core.urls")),
+    path("events/", include("events.urls")),
+    path("interactions/", include("interactions.urls")),
+    path("search/", include("search.urls", namespace="search")),
+    path("notifications/", include("notifications.urls", namespace="notifications")),
 ]
 
 if settings.DEBUG:

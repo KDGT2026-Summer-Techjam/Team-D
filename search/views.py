@@ -1,0 +1,214 @@
+from datetime import date
+
+from django.core.exceptions import ValidationError
+from django.http import HttpResponseBadRequest, HttpResponseForbidden
+from django.shortcuts import get_object_or_404, redirect, render
+
+from events.models import Tag
+
+from .criteria import SearchCriteria
+from .models import SavedSearch
+from .services import SavedSearchService, SearchService
+
+# Create your views here.
+
+
+def _parse_optional_int(value):
+    #GET/POSTの文字列パラメータを任意のintへ変換する（未指定・不正値はNone）
+    if value in (None, ""):
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _parse_optional_date(value):
+    #GET/POSTの文字列パラメータ(ISO 8601)を任意のdateへ変換する（未指定・不正値はNone）
+    if value in (None, ""):
+        return None
+    try:
+        return date.fromisoformat(value)
+    except ValueError:
+        return None
+
+
+def _parse_int_list(values):
+    #タグIDのリストパラメータをintのリストへ変換する（不正値は無視する）
+    result = []
+    for value in values:
+        try:
+            result.append(int(value))
+        except (TypeError, ValueError):
+            continue
+    return result
+
+
+def _parse_bool_flag(value):
+    #チェックボックス等の明示的な真偽判定（"on"/"true"/"1"のみTrue）
+    return value in ("on", "true", "1", "True", "yes")
+
+
+def _build_criteria_from(params):
+    #GET/POSTいずれのQueryDictからもSearchCriteriaを組み立てる共通処理
+    return SearchCriteria(
+        keyword=params.get("keyword", ""),
+        location=params.get("location", ""),
+        period_from=_parse_optional_date(params.get("period_from")),
+        period_to=_parse_optional_date(params.get("period_to")),
+        age_min=_parse_optional_int(params.get("age_min")),
+        age_max=_parse_optional_int(params.get("age_max")),
+        tag_ids=_parse_int_list(params.getlist("tag")),
+    )
+
+
+# --- 更新系ハンドラで使う「POSTに存在しなければ既存値を維持する」共通ヘルパー群。
+# キーワード引数のたびに存在チェックを書くと漏れやすいため一本化している。
+
+
+def _string_or_existing(params, key, existing):
+    return params.get(key, existing)
+
+
+def _date_or_existing(params, key, existing):
+    if key not in params:
+        return existing
+    return _parse_optional_date(params.get(key))
+
+
+def _int_or_existing(params, key, existing):
+    if key not in params:
+        return existing
+    return _parse_optional_int(params.get(key))
+
+
+def _bool_or_existing(params, key, existing):
+    if key not in params:
+        return existing
+    return _parse_bool_flag(params.get(key))
+
+
+def _tag_ids_or_existing(params, existing_ids):
+    if "tag" not in params:
+        return list(existing_ids)
+    return _parse_int_list(params.getlist("tag"))
+
+
+def _get_pk_or_bad_request(request):
+    #POSTのpkパラメータをintへ検証する。不正な場合は400を返すためNoneではなく
+    #HttpResponseBadRequestそのものを返す（呼び出し側で判定できるように）。
+    pk = _parse_optional_int(request.POST.get("pk"))
+    if pk is None:
+        return None, HttpResponseBadRequest("pkが不正です。")
+    return pk, None
+
+
+def _handle_create(request):
+    try:
+        SavedSearchService.create(
+            owner=request.user,
+            keyword=request.POST.get("keyword", ""),
+            location=request.POST.get("location", ""),
+            period_from=_parse_optional_date(request.POST.get("period_from")),
+            period_to=_parse_optional_date(request.POST.get("period_to")),
+            age_min=_parse_optional_int(request.POST.get("age_min")),
+            age_max=_parse_optional_int(request.POST.get("age_max")),
+            # キー未送信時はモデルのdefault=Trueに合わせる（意図せずOFFにしない）
+            notify_enabled=(
+                True
+                if "notify_enabled" not in request.POST
+                else _parse_bool_flag(request.POST.get("notify_enabled"))
+            ),
+            tag_ids=_parse_int_list(request.POST.getlist("tag")),
+        )
+    except ValidationError:
+        pass
+    return None
+
+
+def _handle_update(request):
+    pk, error_response = _get_pk_or_bad_request(request)
+    if error_response is not None:
+        return error_response
+
+    # ownerで絞り込んで取得することで、他人のSavedSearchに対しては
+    # 「存在するかどうか」自体を判別できない404にする(存在確認オラクル化を防ぐ)。
+    saved_search = get_object_or_404(SavedSearch, pk=pk, owner=request.user)
+
+    try:
+        SavedSearchService.update(
+            saved_search=saved_search,
+            user=request.user,
+            keyword=_string_or_existing(request.POST, "keyword", saved_search.keyword),
+            location=_string_or_existing(request.POST, "location", saved_search.location),
+            period_from=_date_or_existing(request.POST, "period_from", saved_search.period_from),
+            period_to=_date_or_existing(request.POST, "period_to", saved_search.period_to),
+            age_min=_int_or_existing(request.POST, "age_min", saved_search.age_min),
+            age_max=_int_or_existing(request.POST, "age_max", saved_search.age_max),
+            notify_enabled=_bool_or_existing(
+                request.POST, "notify_enabled", saved_search.notify_enabled
+            ),
+            tag_ids=_tag_ids_or_existing(
+                request.POST, saved_search.tags.values_list("id", flat=True)
+            ),
+        )
+    except (ValidationError, PermissionError):
+        pass
+    return None
+
+
+def _handle_delete(request):
+    pk, error_response = _get_pk_or_bad_request(request)
+    if error_response is not None:
+        return error_response
+
+    # updateと同様、owner絞り込みで他人のSavedSearchは404にする。
+    saved_search = get_object_or_404(SavedSearch, pk=pk, owner=request.user)
+
+    try:
+        SavedSearchService.delete(saved_search=saved_search, user=request.user)
+    except PermissionError:
+        pass
+    return None
+
+
+# POSTのactionパラメータとハンドラの対応表。create/update/delete以外は不正操作として扱う。
+_POST_ACTIONS = {
+    "create": _handle_create,
+    "update": _handle_update,
+    "delete": _handle_delete,
+}
+
+
+def search_results(request):
+    #検索結果の表示(GET)と保存検索の作成・変更・削除(POST)を1つのURLで受ける。
+    if request.method == "POST":
+        # 保存検索の操作は本人のみ。検索結果の閲覧自体はログイン不要なのでGETは制限しない。
+        if not request.user.is_authenticated:
+            return HttpResponseForbidden("ログインが必要です。")
+
+        handler = _POST_ACTIONS.get(request.POST.get("action"))
+        if handler is None:
+            return HttpResponseBadRequest("不正な操作です。")
+
+        error_response = handler(request)
+        if error_response is not None:
+            return error_response
+
+        # Post/Redirect/Getパターンで二重送信を防ぐ。クエリ条件は保持しない単純な形にしている。
+        return redirect("search:search_results")
+
+    criteria = _build_criteria_from(request.GET)
+    events = SearchService.search(criteria)
+
+    saved_searches = SavedSearch.objects.none()
+    if request.user.is_authenticated:
+        saved_searches = SavedSearch.objects.filter(owner=request.user)
+
+    context = {
+        "events": events,
+        "criteria": criteria,
+        "saved_searches": saved_searches,
+        "all_tags": Tag.objects.all(),
+    }
+    return render(request, "search/search_results.html", context)
