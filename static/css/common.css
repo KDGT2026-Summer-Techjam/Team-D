@@ -629,7 +629,11 @@ textarea {
 
 .notification-item.unread {
     border-left: 4px solid var(--primary-color);
-    background: #f0f7f2;
+    background: var(--highlight-color);
+}
+
+.notification-item {
+    background: var(--highlight-color);
 }
 
 .notification-link {
