@@ -35,9 +35,7 @@ a:hover {
     text-decoration: underline;
 }
 
-/* =========================
-   ヘッダー (共通)
-========================= */
+/*　ヘッダー (共通)*/
 .site-header {
     background-color: #ffffff;
     border-bottom: 1px solid var(--border-color);
@@ -151,9 +149,7 @@ a:hover {
     box-shadow: var(--shadow-sm);
 }
 
-/* =========================
-   フォーム＆カードUI (ログイン・登録・退会・プロフィール)
-========================= */
+/*フォーム＆カードUI (ログイン・登録・退会・プロフィール) */
 .form-card-center {
     max-width: 440px;
     margin: 40px auto;
