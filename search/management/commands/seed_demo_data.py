@@ -12,8 +12,20 @@ User = get_user_model()
 
 # ブラウザでの手動確認用テストユーザー。パスワードは開発用の分かりやすいものにしている。
 DEMO_USERS = [
-    {"username": "testuser", "password": "testpass123"},
-    {"username": "testuser2", "password": "testpass123"},
+    {
+        "key": "participant",
+        "email": "demo-participant@example.com",
+        "name": "デモ参加者",
+        "role": User.Role.PARTICIPANT,
+        "password": "testpass123",
+    },
+    {
+        "key": "organizer",
+        "email": "demo-organizer@example.com",
+        "name": "デモ主催者",
+        "role": User.Role.ORGANIZER,
+        "password": "testpass123",
+    },
 ]
 
 DEMO_TAG_NAMES = ["子供向け", "屋外", "屋内", "無料", "夜間開催"]
@@ -34,20 +46,27 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("デモデータの投入が完了しました。"))
         self.stdout.write("テストユーザー:")
         for demo_user in DEMO_USERS:
-            self.stdout.write(f"  - username={demo_user['username']} / password={demo_user['password']}")
+            self.stdout.write(
+                f"  - email={demo_user['email']} / password={demo_user['password']}"
+            )
 
     def _create_users(self):
         users = {}
         for demo_user in DEMO_USERS:
-            user, created = User.objects.get_or_create(
-                username=demo_user["username"],
-                defaults={"is_active": True},
+            user, _created = User.objects.get_or_create(
+                email=demo_user["email"],
+                defaults={
+                    "name": demo_user["name"],
+                    "role": demo_user["role"],
+                    "is_active": True,
+                },
             )
-            if created:
-                user.set_password(demo_user["password"])
-                user.is_active = True
-                user.save()
-            users[demo_user["username"]] = user
+            user.name = demo_user["name"]
+            user.role = demo_user["role"]
+            user.is_active = True
+            user.set_password(demo_user["password"])
+            user.save()
+            users[demo_user["key"]] = user
         return users
 
     def _create_tags(self):
@@ -58,7 +77,7 @@ class Command(BaseCommand):
         return tags
 
     def _create_events(self, users, tags):
-        organizer = users["testuser2"]
+        organizer = users["organizer"]
         now = timezone.now()
 
         # (title, status, start, end, location, min_age, max_age, tag_names)
@@ -140,9 +159,9 @@ class Command(BaseCommand):
         events = {}
         for title, status, start, end, location, min_age, max_age, tag_names in event_specs:
             event, _created = Event.objects.get_or_create(
+                organizer=organizer,
                 title=title,
                 defaults={
-                    "organizer": organizer,
                     "start_datetime": start,
                     "end_datetime": end,
                     "location": location,
@@ -156,7 +175,7 @@ class Command(BaseCommand):
         return events
 
     def _create_saved_searches(self, users, tags):
-        owner = users["testuser"]
+        owner = users["participant"]
 
         # keyでnotify_for_eventの通知シードから参照できるよう名前を付けている
         saved_search_specs = {
@@ -165,8 +184,6 @@ class Command(BaseCommand):
                 "location": "東京",
                 "period_from": None,
                 "period_to": None,
-                "age_min": 3,
-                "age_max": 10,
                 "notify_enabled": True,
                 "tag_names": ["子供向け"],
             },
@@ -175,8 +192,6 @@ class Command(BaseCommand):
                 "location": "",
                 "period_from": None,
                 "period_to": None,
-                "age_min": None,
-                "age_max": None,
                 "notify_enabled": False,
                 "tag_names": ["夜間開催"],
             },
@@ -186,16 +201,21 @@ class Command(BaseCommand):
         for key, spec in saved_search_specs.items():
             saved_search, _created = SavedSearch.objects.get_or_create(
                 owner=owner,
+                source=SavedSearch.Source.MANUAL,
                 keyword=spec["keyword"],
                 location=spec["location"],
                 defaults={
                     "period_from": spec["period_from"],
                     "period_to": spec["period_to"],
-                    "age_min": spec["age_min"],
-                    "age_max": spec["age_max"],
                     "notify_enabled": spec["notify_enabled"],
                 },
             )
+            saved_search.period_from = spec["period_from"]
+            saved_search.period_to = spec["period_to"]
+            saved_search.age_min = None
+            saved_search.age_max = None
+            saved_search.notify_enabled = spec["notify_enabled"]
+            saved_search.save()
             saved_search.tags.set([tags[name] for name in spec["tag_names"]])
             saved_searches[key] = saved_search
         return saved_searches
@@ -205,7 +225,7 @@ class Command(BaseCommand):
         #Notificationの(user, event, saved_search)一意制約に沿ってget_or_createするため、
         #再実行しても増殖しない。is_readはdefaultsにしか含めないため、手動で既読化した
         #状態を再実行が巻き戻すこともない。
-        testuser = users["testuser"]
+        testuser = users["participant"]
 
         notification_specs = [
             {

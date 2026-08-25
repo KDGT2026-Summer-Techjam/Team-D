@@ -110,15 +110,17 @@ class SearchServiceTests(TestCase):
         self.assertIn(matching, results)
         self.assertNotIn(non_matching, results)
 
-    def test_tag_filter_does_not_duplicate_results(self):
+    def test_multiple_tag_filter_requires_all_tags_without_duplicates(self):
         both_tags = Tag.objects.create(name="両方")
         event = _make_event(organizer=self.organizer, tags=[self.outdoor, both_tags])
+        only_one = _make_event(organizer=self.organizer, tags=[self.outdoor])
 
         results = SearchService.search(
             SearchCriteria(tag_ids=[self.outdoor.id, both_tags.id])
         )
 
         self.assertEqual(list(results).count(event), 1)
+        self.assertNotIn(only_one, results)
 
     def test_combined_criteria_uses_and(self):
         matching = _make_event(
@@ -234,6 +236,17 @@ class MatchServiceTests(TestCase):
         )
 
         self.assertFalse(MatchService.matches(saved_search, event))
+
+    def test_multiple_saved_tags_all_must_match(self):
+        event = _make_event(organizer=self.owner, tags=[self.tag])
+        saved_search = SavedSearchService.create(
+            owner=self.owner,
+            tag_ids=[self.tag.id, self.other_tag.id],
+        )
+
+        self.assertFalse(MatchService.matches(saved_search, event))
+        event.tags.add(self.other_tag)
+        self.assertTrue(MatchService.matches(saved_search, event))
 
     def test_search_service_and_match_service_agree(self):
         """SearchServiceの絞り込み結果とMatchServiceの一致判定が食い違わないことを保証する。"""

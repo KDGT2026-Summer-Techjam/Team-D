@@ -55,7 +55,7 @@ class UserPreferenceForm(forms.ModelForm):
         queryset=Tag.objects.order_by("name"),
         required=False,
         widget=forms.CheckboxSelectMultiple,
-        help_text="選択したタグのいずれかと開催地の両方に合う新着イベントを通知します。",
+        help_text="選択したすべてのタグと開催地の両方に合う新着イベントを通知します。",
     )
 
     class Meta:

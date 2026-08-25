@@ -49,3 +49,18 @@ class LoadSheetTestDataCommandTests(TestCase):
             set(events.get(title="JAPAN PACK 2026 (日本国際包装機械展)").tags.values_list("name", flat=True)),
             {"IT", "事前"},
         )
+
+
+class SeedDemoDataCommandTests(TestCase):
+    def test_command_uses_email_users_and_is_idempotent(self):
+        output = StringIO()
+
+        call_command("seed_demo_data", stdout=output)
+        call_command("seed_demo_data", stdout=output)
+
+        self.assertEqual(
+            Event.objects.filter(title__startswith="【デモ】").count(),
+            8,
+        )
+        self.assertIn("email=demo-participant@example.com", output.getvalue())
+        self.assertIn("email=demo-organizer@example.com", output.getvalue())

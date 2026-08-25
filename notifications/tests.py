@@ -208,6 +208,7 @@ class AutomaticPreferenceNotificationTests(TestCase):
             email="automatic-organizer@example.com", password="pass12345"
         )
         self.outdoor = Tag.objects.create(name="自動通知・屋外")
+        self.indoor = Tag.objects.create(name="自動通知・屋内")
 
     def test_new_published_event_matching_location_creates_notification(self):
         SavedSearchService.sync_notification_preference(
@@ -275,6 +276,28 @@ class AutomaticPreferenceNotificationTests(TestCase):
         self.assertFalse(Notification.objects.filter(user=self.owner).exists())
         event.tags.add(self.outdoor)
 
+        self.assertTrue(
+            Notification.objects.filter(user=self.owner, event=event).exists()
+        )
+
+    def test_all_selected_tags_are_required_for_notification(self):
+        SavedSearchService.sync_notification_preference(
+            owner=self.owner,
+            location="",
+            tag_ids=[self.outdoor.pk, self.indoor.pk],
+            notify_enabled=True,
+        )
+        event = _make_event(
+            organizer=self.organizer,
+            title="屋外かつ屋内の新着イベント",
+        )
+
+        event.tags.add(self.outdoor)
+        self.assertFalse(
+            Notification.objects.filter(user=self.owner, event=event).exists()
+        )
+
+        event.tags.add(self.indoor)
         self.assertTrue(
             Notification.objects.filter(user=self.owner, event=event).exists()
         )

@@ -31,9 +31,9 @@ class SearchService:
         if criteria.period_to is not None:
             queryset = queryset.filter(start_datetime__date__lte=criteria.period_to)
 
-        tag_ids = list(criteria.tag_ids)
-        if tag_ids:
-            queryset = queryset.filter(tags__in=tag_ids)
+        # 複数タグはAND条件。選択したすべてのタグを持つイベントだけを残す。
+        for tag_id in set(criteria.tag_ids):
+            queryset = queryset.filter(tags__id=tag_id)
 
         return queryset.distinct()
 
@@ -154,7 +154,7 @@ class MatchService:
         tag_ids = {tag.id for tag in saved_search.tags.all()}
         if tag_ids:
             event_tag_ids = {tag.id for tag in event.tags.all()}
-            if not (tag_ids & event_tag_ids):
+            if not tag_ids.issubset(event_tag_ids):
                 return False
 
         return True

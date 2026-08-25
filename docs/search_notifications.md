@@ -48,7 +48,7 @@ POST(保存検索のCRUD)を同一URL・同一ビュー(`search_results`)で処�
 | `location` | 文字列 | イベントの`location`に部分一致(大小無視) |
 | `period_from` | 日付(`YYYY-MM-DD`) | 開催期間の下限。不正な形式は無視されNone扱い |
 | `period_to` | 日付(`YYYY-MM-DD`) | 開催期間の上限。不正な形式は無視されNone扱い |
-| `tag` | 整数(複数指定可) | タグID。複数指定時はOR(いずれかのタグを持つイベント) |
+| `tag` | 整数(複数指定可) | タグID。複数指定時はAND(すべてのタグを持つイベント) |
 
 レスポンスのcontext: `events`(検索結果のQuerySet)、`criteria`(組み立てられた
 `SearchCriteria`)、`saved_searches`(ログイン時のみ本人の保存検索一覧、未ログイン時は
@@ -136,7 +136,7 @@ Djangoの既定ログインURL(`/accounts/login/`)へ302リダイレクトされ
 - **`SearchService.search(criteria: SearchCriteria) -> QuerySet[Event]`**
   `search/queries.py::published_events()`(`status`が`DRAFT`/`CANCEL`のイベントを
   除外)を起点に、`criteria`の非空フィールドのみを`Q`でAND結合して絞り込む
-  (`keyword`はtitle/descriptionへのOR、`tag`は複数指定時OR)。空条件なら全公開
+  (`keyword`はtitle/descriptionへのOR、`tag`は複数指定時AND)。空条件なら全公開
   イベントをそのまま返す。
 - **`SavedSearchService.create(*, owner, tag_ids=None, **fields) -> SavedSearch`**
   `full_clean()`実行後保存。`tag_ids`指定時は`tags.set(...)`。
@@ -250,5 +250,6 @@ events = SearchService.search(criteria)  # QuerySet[Event]
 .venv/bin/python manage.py seed_demo_data
 ```
 
-投入されるテストユーザー: `testuser` / `testuser2`(パスワードいずれも
-`testpass123`)。詳細は同コマンドのソースを参照。
+投入されるテストユーザー: `demo-participant@example.com` /
+`demo-organizer@example.com`(パスワードはいずれも`testpass123`)。
+詳細は同コマンドのソースを参照。
