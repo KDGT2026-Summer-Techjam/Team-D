@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}プロフィール変更 | TechJamSummer{% endblock %}
+
+{% block content %}
+
+<section class="form-page">
+
+    <div class="form-card">
+
+        <h1>プロフィール変更</h1>
+
+        <p class="form-description">
+            プロフィール情報を変更できます。
+        </p>
+
+        <form method="post" enctype="multipart/form-data">
+
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="form-error">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+
+            {% for field in form %}
+
+                <div class="form-group">
+
+                    <label for="{{ field.id_for_label }}">
+                        {{ field.label }}
+                    </label>
+
+                    {{ field }}
+
+                    {% if field.errors %}
+                        <div class="field-error">
+                            {{ field.errors }}
+                        </div>
+                    {% endif %}
+
+                </div>
+
+            {% endfor %}
+
+
+            <div class="form-actions">
+
+                <button
+                    type="submit"
+                    class="button button-primary"
+                >
+                    保存する
+                </button>
+
+                <a href="#" class="button button-secondary">
+                    キャンセル
+                </a>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</section>
+
+{% endblock %}

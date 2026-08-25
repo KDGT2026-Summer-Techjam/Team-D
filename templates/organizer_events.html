@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}イベント管理 | TechJamSummer{% endblock %}
+
+{% block content %}
+
+<section class="organizer-page">
+
+    <div class="page-container">
+
+        <div class="page-header">
+
+            <div>
+                <h1>イベント管理</h1>
+
+                <p>
+                    作成したイベントを管理できます。
+                </p>
+            </div>
+
+            <!-- event_create は未実装のため仮リンク -->
+            <a href="#"
+               class="button button-primary">
+                イベントを作成
+            </a>
+
+        </div>
+
+
+        {% if events %}
+
+            <div class="event-management-list">
+
+                {% for event in events %}
+
+                    <article class="management-card">
+
+                        <div class="management-card-content">
+
+                            {% if event.image %}
+
+                                <img
+                                    src="{{ event.image.url }}"
+                                    alt="{{ event.title }}"
+                                    class="event-image"
+                                >
+
+                            {% endif %}
+
+
+                            <div class="event-info">
+
+                                <h2>
+                                    {{ event.title }}
+                                </h2>
+
+                                <p>
+                                    {{ event.description }}
+                                </p>
+
+                                <p>
+                                    {{ event.start_datetime|date:"Y/m/d H:i" }}
+                                    ～
+                                    {{ event.end_datetime|date:"Y/m/d H:i" }}
+                                </p>
+
+                                <p>
+                                    {{ event.location }}
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="management-actions">
+
+                            <!-- イベント詳細 -->
+                            <a
+                                href="{% url 'events:event_detail' event.id %}"
+                                class="button button-secondary"
+                            >
+                                詳細
+                            </a>
+
+                            <!-- event_edit は未実装のため仮リンク -->
+                            <a
+                                href="#"
+                                class="button button-secondary"
+                            >
+                                編集
+                            </a>
+
+                            <!-- event_delete は未実装のため仮リンク -->
+                            <a
+                                href="#"
+                                class="button button-danger"
+                            >
+                                削除
+                            </a>
+
+                        </div>
+
+                    </article>
+
+                {% endfor %}
+
+            </div>
+
+        {% else %}
+
+            <div class="empty-state">
+
+                <h2>イベントがありません</h2>
+
+                <p>
+                    まだイベントを作成していません。
+                </p>
+
+                <!-- event_create は未実装のため仮リンク -->
+                <a
+                    href="#"
+                    class="button button-primary"
+                >
+                    イベントを作成する
+                </a>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</section>
+
+{% endblock %}
