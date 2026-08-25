@@ -9,7 +9,7 @@ User = get_user_model()
 
 class SavedSearchModelTests(TestCase):
     def setUp(self):
-        self.owner = User.objects.create_user(username="owner", password="pass12345")
+        self.owner = User.objects.create_user(email="owner@example.com", password="pass12345")
 
     def test_str_includes_owner_and_keyword(self):
         saved_search = SavedSearch.objects.create(owner=self.owner, keyword="花火")

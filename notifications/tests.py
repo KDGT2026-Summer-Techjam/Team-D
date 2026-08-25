@@ -28,7 +28,7 @@ def _make_event(*, organizer, title="イベント", status=Event.Status.PUBLISH,
 
 class NotificationModelTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username="user", password="pass12345")
+        self.user = User.objects.create_user(email="user@example.com", password="pass12345")
         self.event = _make_event(organizer=self.user)
         self.saved_search = SavedSearchService.create(owner=self.user, keyword="花火")
 
@@ -51,8 +51,8 @@ class NotificationModelTests(TestCase):
 
 class NotificationServiceTests(TestCase):
     def setUp(self):
-        self.owner = User.objects.create_user(username="owner", password="pass12345")
-        self.other = User.objects.create_user(username="other", password="pass12345")
+        self.owner = User.objects.create_user(email="owner@example.com", password="pass12345")
+        self.other = User.objects.create_user(email="other@example.com", password="pass12345")
         self.event = _make_event(organizer=self.owner)
         self.saved_search = SavedSearchService.create(owner=self.owner, keyword="花火")
 
@@ -146,7 +146,7 @@ class NotificationServiceTests(TestCase):
 
 class EventMatchNotifierTests(TestCase):
     def setUp(self):
-        self.owner = User.objects.create_user(username="owner", password="pass12345")
+        self.owner = User.objects.create_user(email="owner@example.com", password="pass12345")
 
     def test_notify_for_event_creates_notification_for_matching_saved_search(self):
         event = _make_event(organizer=self.owner, title="夏祭り")

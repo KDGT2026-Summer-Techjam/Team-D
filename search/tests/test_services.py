@@ -35,7 +35,7 @@ def _make_event(*, organizer, title="イベント", status=Event.Status.PUBLISH,
 
 class SearchServiceTests(TestCase):
     def setUp(self):
-        self.organizer = User.objects.create_user(username="organizer", password="pass12345")
+        self.organizer = User.objects.create_user(email="organizer@example.com", password="pass12345")
         self.outdoor = Tag.objects.create(name="屋外")
         self.indoor = Tag.objects.create(name="屋内")
 
@@ -157,8 +157,8 @@ class SearchServiceTests(TestCase):
 
 class SavedSearchServiceTests(TestCase):
     def setUp(self):
-        self.owner = User.objects.create_user(username="owner", password="pass12345")
-        self.other = User.objects.create_user(username="other", password="pass12345")
+        self.owner = User.objects.create_user(email="owner@example.com", password="pass12345")
+        self.other = User.objects.create_user(email="other@example.com", password="pass12345")
         self.tag = Tag.objects.create(name="屋外")
 
     def test_create_saved_search(self):
@@ -202,7 +202,7 @@ class SavedSearchServiceTests(TestCase):
 
 class MatchServiceTests(TestCase):
     def setUp(self):
-        self.owner = User.objects.create_user(username="owner", password="pass12345")
+        self.owner = User.objects.create_user(email="owner@example.com", password="pass12345")
         self.tag = Tag.objects.create(name="屋外")
         self.other_tag = Tag.objects.create(name="屋内")
 

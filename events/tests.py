@@ -14,10 +14,10 @@ User = get_user_model()
 
 class EventServiceTests(TestCase):
     def setUp(self):
-        self.organizer = User.objects.create_user(username="organizer", password="pass")
-        self.other_user = User.objects.create_user(username="other", password="pass")
+        self.organizer = User.objects.create_user(email="organizer@example.com", password="pass")
+        self.other_user = User.objects.create_user(email="other@example.com", password="pass")
         self.admin = User.objects.create_user(
-            username="admin", password="pass", is_staff=True
+            email="admin@example.com", password="pass", is_staff=True
         )
 
         self.start = timezone.now() + timedelta(days=1)
@@ -97,8 +97,8 @@ class EventServiceTests(TestCase):
 
 class MyFavoritesViewTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username="user1", password="pass")
-        self.organizer = User.objects.create_user(username="organizer", password="pass")
+        self.user = User.objects.create_user(email="user1@example.com", password="pass")
+        self.organizer = User.objects.create_user(email="organizer@example.com", password="pass")
 
         self.event = Event.objects.create(
             title="テストイベント",
@@ -114,20 +114,20 @@ class MyFavoritesViewTests(TestCase):
         self.assertEqual(response.status_code, 302)
 
     def test_my_favorites_accessible_when_logged_in(self):
-        self.client.login(username="user1", password="pass")
+        self.client.login(email="user1@example.com", password="pass")
         response = self.client.get(reverse("events:my_favorites"))
         self.assertEqual(response.status_code, 200)
 
 
 class MyViewHistoryViewTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username="user1", password="pass")
+        self.user = User.objects.create_user(email="user1@example.com", password="pass")
 
     def test_my_view_history_requires_login(self):
         response = self.client.get(reverse("events:my_view_history"))
         self.assertEqual(response.status_code, 302)
 
     def test_my_view_history_accessible_when_logged_in(self):
-        self.client.login(username="user1", password="pass")
+        self.client.login(email="user1@example.com", password="pass")
         response = self.client.get(reverse("events:my_view_history"))
         self.assertEqual(response.status_code, 200)

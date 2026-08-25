@@ -11,7 +11,7 @@ class SearchResultsPostDispatchTests(TestCase):
     #POST側の共通ディスパッチ(認証・action判定)の振る舞いを検証する。
     def setUp(self):
         self.url = reverse("search:search_results")
-        self.owner = User.objects.create_user(username="owner", password="pass12345")
+        self.owner = User.objects.create_user(email="owner@example.com", password="pass12345")
 
     def test_anonymous_post_is_forbidden(self):
         response = self.client.post(self.url, {"action": "create", "keyword": "花火"})
@@ -39,8 +39,8 @@ class SavedSearchOwnershipTests(TestCase):
     #他人のSavedSearchに対するupdate/deleteが404になり、実データも変更されないことを検証する。
     def setUp(self):
         self.url = reverse("search:search_results")
-        self.owner = User.objects.create_user(username="owner", password="pass12345")
-        self.other = User.objects.create_user(username="other", password="pass12345")
+        self.owner = User.objects.create_user(email="owner@example.com", password="pass12345")
+        self.other = User.objects.create_user(email="other@example.com", password="pass12345")
         self.saved_search = SavedSearch.objects.create(
             owner=self.owner, keyword="花火", location="東京"
         )
@@ -94,7 +94,7 @@ class SavedSearchInvalidPkTests(TestCase):
     #非数値のpkが渡された場合に500にならず400を返すことを検証する(修正2の回帰テスト)。
     def setUp(self):
         self.url = reverse("search:search_results")
-        self.owner = User.objects.create_user(username="owner", password="pass12345")
+        self.owner = User.objects.create_user(email="owner@example.com", password="pass12345")
         self.client.force_login(self.owner)
 
     def test_update_with_non_numeric_pk_is_bad_request(self):
@@ -121,7 +121,7 @@ class SavedSearchPartialUpdateTests(TestCase):
     #未送信フィールドが既存値を消してしまわないことを検証する(修正1の回帰テスト)。
     def setUp(self):
         self.url = reverse("search:search_results")
-        self.owner = User.objects.create_user(username="owner", password="pass12345")
+        self.owner = User.objects.create_user(email="owner@example.com", password="pass12345")
         self.client.force_login(self.owner)
         self.saved_search = SavedSearch.objects.create(
             owner=self.owner,
@@ -170,7 +170,7 @@ class SavedSearchNotifyEnabledDefaultTests(TestCase):
     #notify_enabledを送信しないcreateでモデルのdefault=Trueが維持されることを検証する(修正4の回帰テスト)。
     def setUp(self):
         self.url = reverse("search:search_results")
-        self.owner = User.objects.create_user(username="owner", password="pass12345")
+        self.owner = User.objects.create_user(email="owner@example.com", password="pass12345")
         self.client.force_login(self.owner)
 
     def test_create_without_notify_enabled_defaults_to_true(self):

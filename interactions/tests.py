@@ -13,9 +13,9 @@ User = get_user_model()
 
 class InteractionServiceTests(TestCase):
     def setUp(self):
-        self.organizer = User.objects.create_user(username="organizer", password="pass")
-        self.user = User.objects.create_user(username="user1", password="pass")
-        self.other_user = User.objects.create_user(username="user2", password="pass")
+        self.organizer = User.objects.create_user(email="organizer@example.com", password="pass")
+        self.user = User.objects.create_user(email="user1@example.com", password="pass")
+        self.other_user = User.objects.create_user(email="user2@example.com", password="pass")
 
         self.finished_event = Event.objects.create(
             title="終了済みイベント",
