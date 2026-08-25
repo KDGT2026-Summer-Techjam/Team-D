@@ -157,7 +157,8 @@ Djangoの既定ログインURL(`/accounts/login/`)へ302リダイレクトされ
 ### `notifications/services.py`
 
 - **`should_notify(user) -> bool`**
-  暫定で常に`True`(セクション5参照)。
+  `user.preference.notifications_enabled`を参照して判定する。`preference`が
+  未設定のユーザーは`True`扱い(セクション5参照)。
 - **`NotificationService.create_notification(*, user, event, saved_search, message, notification_type=Notification.NotificationType.MATCH) -> Notification`**
   `get_or_create`(重複防止)。
 - **`NotificationService.mark_as_read(*, notification, user) -> Notification`**
@@ -195,9 +196,9 @@ events = SearchService.search(criteria)  # QuerySet[Event]
 
 ## 5. 既知の制約・TODO
 
-- **`should_notify`は暫定で常に`True`**(`notifications/services.py`)。
-  `# TODO: notifications_enabled連携待ち`とコメントしている通り、`accounts`アプリ
-  導入後にユーザーの通知可否設定(`notifications_enabled`)と連携する予定(未着手)。
+- **`should_notify`は`user.preference.notifications_enabled`を参照する**
+  (`notifications/services.py`)。`preference`が未設定(`accounts`アプリ未導入時など)
+  のユーザーは`True`扱いにフォールバックする。
 - **`accounts`アプリが本ブランチに未導入**のため、Django標準の`AUTH_USER_MODEL`
   (`django.contrib.auth.models.User`)をそのまま使っている。これに伴い
   `@login_required`のデフォルトログインURL`/accounts/login/`が**404**になる
