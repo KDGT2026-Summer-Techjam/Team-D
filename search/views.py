@@ -65,6 +65,8 @@ def _build_criteria_from(params):
         location=params.get("location", ""),
         period_from=_parse_optional_date(params.get("period_from")),
         period_to=_parse_optional_date(params.get("period_to")),
+        age_min=_parse_optional_int(params.get("age_min")),
+        age_max=_parse_optional_int(params.get("age_max")),
         tag_ids=_parse_int_list(params.getlist("tag")),
     )
 
@@ -81,6 +83,12 @@ def _date_or_existing(params, key, existing):
     if key not in params:
         return existing
     return _parse_optional_date(params.get(key))
+
+
+def _int_or_existing(params, key, existing):
+    if key not in params:
+        return existing
+    return _parse_optional_int(params.get(key))
 
 
 def _bool_or_existing(params, key, existing):
@@ -112,6 +120,8 @@ def _handle_create(request):
             location=request.POST.get("location", ""),
             period_from=_parse_optional_date(request.POST.get("period_from")),
             period_to=_parse_optional_date(request.POST.get("period_to")),
+            age_min=_parse_optional_int(request.POST.get("age_min")),
+            age_max=_parse_optional_int(request.POST.get("age_max")),
             # キー未送信時はモデルのdefault=Trueに合わせる（意図せずOFFにしない）
             notify_enabled=(
                 True
@@ -149,6 +159,8 @@ def _handle_update(request):
             location=_string_or_existing(request.POST, "location", saved_search.location),
             period_from=_date_or_existing(request.POST, "period_from", saved_search.period_from),
             period_to=_date_or_existing(request.POST, "period_to", saved_search.period_to),
+            age_min=_int_or_existing(request.POST, "age_min", saved_search.age_min),
+            age_max=_int_or_existing(request.POST, "age_max", saved_search.age_max),
             notify_enabled=_bool_or_existing(
                 request.POST, "notify_enabled", saved_search.notify_enabled
             ),

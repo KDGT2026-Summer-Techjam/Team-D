@@ -16,4 +16,6 @@ class SearchCriteria:
     location: str = ""
     period_from: Optional[date] = None
     period_to: Optional[date] = None
+    age_min: Optional[int] = None
+    age_max: Optional[int] = None
     tag_ids: Iterable[int] = field(default_factory=tuple)

@@ -27,6 +27,14 @@ def period_overlaps(period1_from, period1_to, period2_from, period2_to):
     return _ranges_overlap(period1_from, period1_to, period2_from, period2_to)
 
 
+def age_ranges_overlap(age1_min, age1_max, age2_min, age2_max):
+    """2つの対象年齢の範囲が重なるかどうかを判定する。
+
+    境界(min/max)がNoneの場合は無制限（下限なし・上限なし）として扱う。
+    """
+    return _ranges_overlap(age1_min, age1_max, age2_min, age2_max)
+
+
 def is_criteria_empty(criteria):
     """検索条件が実質的に空（絞り込みなし）かどうかを判定する。"""
     return (
@@ -34,5 +42,7 @@ def is_criteria_empty(criteria):
         and not criteria.location
         and criteria.period_from is None
         and criteria.period_to is None
+        and criteria.age_min is None
+        and criteria.age_max is None
         and not list(criteria.tag_ids)
     )

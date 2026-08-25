@@ -1,7 +1,7 @@
 from django.db.models import Q
 from django.utils import timezone
 
-from .logic import is_criteria_empty, period_overlaps
+from .logic import age_ranges_overlap, is_criteria_empty, period_overlaps
 from .models import SavedSearch
 from .queries import published_events
 
@@ -31,9 +31,22 @@ class SearchService:
         if criteria.period_to is not None:
             queryset = queryset.filter(start_datetime__date__lte=criteria.period_to)
 
-        # 複数タグはAND条件。選択したすべてのタグを持つイベントだけを残す。
-        for tag_id in set(criteria.tag_ids):
-            queryset = queryset.filter(tags__id=tag_id)
+        # 対象年齢の入力欄は画面上では非表示だが、既存データとの互換性のため
+        # 内部の検索条件としては引き続き扱う。
+        if criteria.age_min is not None:
+            queryset = queryset.filter(
+                Q(max_age__isnull=True) | Q(max_age__gte=criteria.age_min)
+            )
+
+        if criteria.age_max is not None:
+            queryset = queryset.filter(
+                Q(min_age__isnull=True) | Q(min_age__lte=criteria.age_max)
+            )
+
+        # 複数タグはOR条件。選択したタグを1つでも持つイベントを残す。
+        tag_ids = list(criteria.tag_ids)
+        if tag_ids:
+            queryset = queryset.filter(tags__in=tag_ids)
 
         return queryset.distinct()
 
@@ -146,6 +159,11 @@ class MatchService:
         ):
             return False
 
+        if not age_ranges_overlap(
+            saved_search.age_min, saved_search.age_max, event.min_age, event.max_age
+        ):
+            return False
+
         # .all()でイテレートしてIDを集める（.values_list()は related manager の
         # prefetch_relatedキャッシュを使わず毎回クエリを発行してしまうため、
         # 呼び出し側でprefetch_related済みのsaved_search/eventを渡された場合に
@@ -154,7 +172,7 @@ class MatchService:
         tag_ids = {tag.id for tag in saved_search.tags.all()}
         if tag_ids:
             event_tag_ids = {tag.id for tag in event.tags.all()}
-            if not tag_ids.issubset(event_tag_ids):
+            if not (tag_ids & event_tag_ids):
                 return False
 
         return True
