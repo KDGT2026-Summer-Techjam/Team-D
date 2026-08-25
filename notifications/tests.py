@@ -3,6 +3,7 @@ from datetime import timedelta
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError, transaction
 from django.test import TestCase
+from django.urls import reverse
 from django.utils import timezone
 
 from events.models import Event, Tag
@@ -142,6 +143,59 @@ class NotificationServiceTests(TestCase):
 
         self.assertEqual(own_notifications.count(), 1)
         self.assertEqual(own_notifications.first().user, self.owner)
+
+
+class NotificationViewTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(
+            email="view-owner@example.com", password="pass12345"
+        )
+        self.other = User.objects.create_user(
+            email="view-other@example.com", password="pass12345"
+        )
+        self.event = _make_event(organizer=self.owner, title="通知対象イベント")
+        self.saved_search = SavedSearchService.create(
+            owner=self.owner, keyword="通知対象"
+        )
+
+    def _create_notification(self, *, user=None, event=None, saved_search=None):
+        return NotificationService.create_notification(
+            user=user or self.owner,
+            event=event or self.event,
+            saved_search=saved_search or self.saved_search,
+            message="条件に一致しました",
+        )
+
+    def test_common_header_shows_only_logged_in_users_unread_count(self):
+        self._create_notification()
+        other_event = _make_event(organizer=self.other, title="他人向けイベント")
+        other_search = SavedSearchService.create(owner=self.other, keyword="他人向け")
+        self._create_notification(
+            user=self.other, event=other_event, saved_search=other_search
+        )
+        self.client.force_login(self.owner)
+
+        response = self.client.get(reverse("core:home"))
+
+        self.assertEqual(response.context["unread_notification_count"], 1)
+        self.assertContains(response, 'class="notification-badge"')
+        self.assertContains(response, "未読通知1件")
+
+    def test_common_header_hides_badge_when_there_are_no_unread_notifications(self):
+        self.client.force_login(self.owner)
+
+        response = self.client.get(reverse("core:home"))
+
+        self.assertEqual(response.context["unread_notification_count"], 0)
+        self.assertNotContains(response, 'class="notification-badge"')
+
+    def test_notification_list_links_to_matching_event(self):
+        self._create_notification()
+        self.client.force_login(self.owner)
+
+        response = self.client.get(reverse("notifications:notification_list"))
+
+        self.assertContains(response, reverse("events:event_detail", args=[self.event.pk]))
 
 
 class EventMatchNotifierTests(TestCase):

@@ -17,7 +17,7 @@
 
     <!-- 一括既読ボタン -->
     {% if unread_count %}
-        <div class="notification-actions" style="margin-bottom: 20px;">
+        <div class="notification-actions">
             <form method="post" action="{% url 'notifications:notification_mark_all_read' %}">
                 {% csrf_token %}
                 <button type="submit" class="button">すべて既読にする</button>
@@ -28,22 +28,26 @@
     <!-- 通知リスト -->
     <div class="notification-list">
         {% for notification in notifications %}
-            <div class="notification-item {% if not notification.is_read %}unread{% endif %}" style="border-bottom: 1px solid #ccc; padding: 10px 0;">
+            <article class="notification-item {% if not notification.is_read %}unread{% endif %}">
                 <div class="notification-content">
                     <p class="notification-message">{{ notification.message }}</p>
                     <small class="notification-date">{{ notification.created_at }}</small>
+                    <a
+                        class="notification-event-link"
+                        href="{% url 'events:event_detail' notification.event.pk %}"
+                    >イベント詳細を見る</a>
                 </div>
 
                 <!-- 個別既読ボタン（未読の場合のみ表示） -->
                 {% if not notification.is_read %}
-                    <form method="post" action="{% url 'notifications:notification_mark_read' notification.pk %}" style="margin-top: 5px;">
+                    <form class="notification-read-form" method="post" action="{% url 'notifications:notification_mark_read' notification.pk %}">
                         {% csrf_token %}
                         <button type="submit" class="button button-small">既読にする</button>
                     </form>
                 {% endif %}
-            </div>
+            </article>
         {% empty %}
-            <p>通知はありません。</p>
+            <p class="empty-state">通知はありません。</p>
         {% endfor %}
     </div>
 

@@ -640,6 +640,33 @@ textarea {
     position: relative;
 }
 
+.notification-badge {
+    display: inline-flex;
+    min-width: 20px;
+    height: 20px;
+    margin-left: 4px;
+    padding: 0 6px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: var(--danger-color);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.notification-event-link {
+    display: inline-block;
+    margin-top: 10px;
+    font-weight: 600;
+}
+
+.notification-read-form {
+    margin-top: 12px;
+    padding: 0 20px 20px;
+}
+
 .empty-state {
     padding: 36px 24px;
     border: 1px dashed var(--border-color);
@@ -716,6 +743,47 @@ textarea {
 
     .main-nav {
         gap: 12px;
+    }
+
+    .site-header.navigation-ready .logo {
+        order: 1;
+    }
+
+    .site-header.navigation-ready .menu-button {
+        display: inline-flex;
+        order: 2;
+        width: 42px;
+        height: 42px;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        background: #fff;
+        color: var(--text-color);
+        cursor: pointer;
+        font-size: 22px;
+    }
+
+    .site-header.navigation-ready .main-nav {
+        display: none;
+        order: 3;
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 4px;
+        padding-top: 10px;
+    }
+
+    .site-header.navigation-ready .main-nav.is-open {
+        display: flex;
+    }
+
+    .site-header.navigation-ready .main-nav a,
+    .site-header.navigation-ready .logout-form button {
+        display: block;
+        width: 100%;
+        padding: 10px 12px;
+        text-align: left;
     }
 
     .management-card {

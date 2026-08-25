@@ -28,7 +28,7 @@
             </a>
 
             <!-- ナビゲーション -->
-            <nav class="main-nav">
+            <nav class="main-nav" id="main-navigation" aria-label="メインメニュー">
 
                 <a href="{% url 'core:home' %}">
                     ホーム
@@ -40,6 +40,12 @@
 
                 <a href="{% url 'notifications:notification_list' %}" class="notification-link">
                     通知
+                    {% if unread_notification_count %}
+                        <span
+                            class="notification-badge"
+                            aria-label="未読通知{{ unread_notification_count }}件"
+                        >{{ unread_notification_count }}</span>
+                    {% endif %}
                 </a>
 
                 {% if user.is_authenticated %}
@@ -76,8 +82,14 @@
             </nav>
 
             <!-- スマートフォン用メニューボタン -->
-            <button class="menu-button" type="button">
-                ☰
+            <button
+                class="menu-button"
+                type="button"
+                aria-controls="main-navigation"
+                aria-expanded="false"
+                aria-label="メニューを開く"
+            >
+                <span aria-hidden="true">☰</span>
             </button>
 
         </div>
