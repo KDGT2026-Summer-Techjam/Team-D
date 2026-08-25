@@ -78,6 +78,40 @@ a:hover {
     text-decoration: none;
 }
 
+.main-nav .settings-button {
+    display: inline-flex;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    background: var(--highlight-color);
+    color: var(--primary-color);
+}
+
+.main-nav .settings-button:hover,
+.main-nav .settings-button:focus-visible {
+    border-color: var(--primary-color);
+    background: #e4eadb;
+    color: var(--primary-hover);
+}
+
+.main-nav .settings-button:focus-visible {
+    outline: 3px solid rgba(37, 109, 74, 0.2);
+    outline-offset: 2px;
+}
+
+.settings-button svg {
+    width: 21px;
+    height: 21px;
+}
+
+.settings-label {
+    display: none;
+}
+
 .user-dropdown {
     display: flex;
     align-items: center;
@@ -751,7 +785,7 @@ textarea {
     margin: 0 auto;
     padding: 24px;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
     gap: 20px;
     color: var(--text-muted);
     font-size: 13px;
@@ -759,11 +793,6 @@ textarea {
 
 .footer-inner p {
     margin: 0;
-}
-
-.footer-inner nav {
-    display: flex;
-    gap: 16px;
 }
 
 /*レスポンシブ*/
@@ -825,6 +854,23 @@ textarea {
         width: 100%;
         padding: 10px 12px;
         text-align: left;
+    }
+
+    .site-header.navigation-ready .main-nav .settings-button {
+        display: flex;
+        width: 100%;
+        height: auto;
+        min-height: 42px;
+        flex: none;
+        gap: 10px;
+        justify-content: flex-start;
+        border: 0;
+        border-radius: var(--radius-sm);
+        background: transparent;
+    }
+
+    .site-header.navigation-ready .settings-label {
+        display: inline;
     }
 
     .management-card {

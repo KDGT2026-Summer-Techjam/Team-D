@@ -72,6 +72,18 @@ class ParticipantUiTests(TestCase):
         self.assertNotContains(response, self.draft_event.title)
         self.assertContains(response, reverse("search:search_results"))
 
+    def test_authenticated_header_has_settings_button_and_footer_has_no_home_link(self):
+        self.client.force_login(self.participant)
+
+        response = self.client.get(reverse("core:home"))
+        html = response.content.decode()
+
+        self.assertContains(response, reverse("accounts:preferences"), count=1)
+        self.assertContains(response, 'class="settings-button"')
+        self.assertContains(response, 'aria-label="設定"')
+        # ホームへのリンクはヘッダーのロゴとメニューだけで、フッターには置かない。
+        self.assertEqual(html.count('href="/"'), 2)
+
     def test_event_list_uses_real_event_template_and_hides_drafts(self):
         response = self.client.get(reverse("events:event_list"))
 
