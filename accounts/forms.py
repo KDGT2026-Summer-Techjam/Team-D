@@ -60,7 +60,7 @@ class UserPreferenceForm(forms.ModelForm):
 
     class Meta:
         model = UserPreference
-        fields = ("desired_location", "notifications_enabled", "theme_color")
+        fields = ("desired_location", "notifications_enabled")
         labels = {
             "desired_location": "通知する開催地",
         }
@@ -76,7 +76,6 @@ class UserPreferenceForm(forms.ModelForm):
                 "desired_location",
                 "notification_tags",
                 "notifications_enabled",
-                "theme_color",
             )
         )
 

@@ -80,6 +80,7 @@ class Command(BaseCommand):
             "start_datetime": start_datetime,
             "end_datetime": end_datetime,
             "location": spec.location,
+            "official_url": spec.url,
             "min_age": min_age,
             "max_age": max_age,
             "status": Event.Status.PUBLISH,

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}{{ event.title }} | EventMatchTechjamsummer{% endblock %}
+{% block title %}{{ event.title }} | EventMatch{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/participant.css' %}">
@@ -9,7 +9,11 @@
 
 {% block content %}
 <article class="participant-page event-detail">
-  <a class="back-link" href="{% url 'events:event_list' %}">← イベント一覧へ戻る</a>
+  {% if return_query %}
+    <a class="back-link" href="{% url 'search:search_results' %}?{{ return_query }}">← 検索結果へ戻る</a>
+  {% else %}
+    <a class="back-link" href="{% url 'events:event_list' %}">← イベント一覧へ戻る</a>
+  {% endif %}
 
   <header class="event-detail-header">
     <div class="event-detail-image">
@@ -38,6 +42,16 @@
           <dt>開催地</dt>
           <dd>{{ event.location|default:"未定" }}</dd>
         </div>
+        {% if event.official_url %}
+          <div>
+            <dt>公式サイト</dt>
+            <dd>
+              <a class="text-link" href="{{ event.official_url }}" target="_blank" rel="noopener noreferrer">
+                公式ページを開く
+              </a>
+            </dd>
+          </div>
+        {% endif %}
         <div>
           <dt>対象年齢</dt>
           <dd>

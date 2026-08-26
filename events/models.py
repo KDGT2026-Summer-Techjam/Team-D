@@ -34,6 +34,7 @@ class Event(models.Model):
     end_datetime = models.DateTimeField()
 
     location = models.CharField(max_length = 255, blank = True)
+    official_url = models.URLField(blank=True)
 
     # 対象年齢の範囲。任意項目（未指定=年齢制限なし）
     min_age = models.PositiveIntegerField(null = True, blank = True)

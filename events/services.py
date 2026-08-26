@@ -1,4 +1,5 @@
 from django.core.exceptions import ValidationError
+from django.db.models import Avg, Count
 
 from .models import Event
 
@@ -7,6 +8,13 @@ class EventService:
     @staticmethod
     def get_published_events():
         return Event.objects.filter(status=Event.Status.PUBLISH)
+
+    @staticmethod
+    def with_rating_summary(queryset):
+        return queryset.annotate(
+            average_rating=Avg("ratings__rating"),
+            review_count=Count("ratings", distinct=True),
+        )
 
     @staticmethod
     def create_event(*, organizer, **fields):

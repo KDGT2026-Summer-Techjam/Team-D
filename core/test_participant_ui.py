@@ -67,7 +67,8 @@ class ParticipantUiTests(TestCase):
         response = self.client.get(reverse("core:home"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "EventMatchTechjamsummer")
+        self.assertContains(response, "EventMatch")
+        self.assertNotContains(response, "EventMatchTechjamsummer")
         self.assertNotContains(response, "TechJamSummer")
         self.assertContains(response, self.upcoming_event.title)
         self.assertNotContains(response, self.finished_event.title)

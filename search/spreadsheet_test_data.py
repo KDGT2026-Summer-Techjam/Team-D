@@ -77,7 +77,6 @@ def build_description(spec):
         f"開催時間: {spec.time_text}",
         f"ターゲット年齢: {spec.target_text}",
         f"参加費用: {spec.fee_text}",
-        f"公式URL: {spec.url}",
     ]
     if spec.provisional_tags:
         details.append(f"仮タグ: {'、'.join(spec.provisional_tags)}")

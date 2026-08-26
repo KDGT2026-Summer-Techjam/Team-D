@@ -605,6 +605,69 @@ textarea {
     border-top: 1px solid var(--border-color);
 }
 
+.saved-notification-settings {
+    margin-top: 18px;
+}
+
+.saved-notification-header,
+.notification-rule {
+    display: flex;
+    gap: 18px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.saved-notification-header {
+    padding-bottom: 16px;
+}
+
+.saved-notification-header h2,
+.notification-rule h3,
+.notification-rule p {
+    margin: 0;
+}
+
+.notification-rule-count {
+    flex: 0 0 auto;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: var(--highlight-color);
+    color: var(--primary-color);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.notification-rule {
+    padding: 16px 0;
+    border-top: 1px solid var(--border-color);
+}
+
+.notification-rule p {
+    margin-top: 5px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.notification-rule .button {
+    width: auto;
+    flex: 0 0 auto;
+}
+
+.notification-rule-note {
+    margin: 0 0 16px;
+    padding: 12px 14px;
+    border-radius: var(--radius-sm);
+    background: #fff7e6;
+    color: #765000;
+    font-size: 13px;
+}
+
+.notification-rule-empty {
+    margin: 0;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
 .preference-tag-options {
     display: flex;
     flex-wrap: wrap;
@@ -887,6 +950,15 @@ textarea {
     .confirm-card,
     .form-card {
         padding: 22px;
+    }
+
+    .notification-rule {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .notification-rule .button {
+        width: 100%;
     }
 }
 

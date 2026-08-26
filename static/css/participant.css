@@ -334,6 +334,20 @@
   line-height: 1.55;
 }
 
+.event-rating-summary {
+  display: flex;
+  gap: 5px;
+  align-items: baseline;
+  margin-top: 12px;
+  color: var(--participant-muted);
+  font-size: 0.84rem;
+}
+
+.event-rating-summary strong {
+  color: var(--participant-primary-dark);
+  font-size: 1.1rem;
+}
+
 .empty-state,
 .notice-card {
   padding: clamp(24px, 5vw, 48px);
@@ -541,6 +555,93 @@
   margin-bottom: 18px;
 }
 
+.search-save-area {
+  margin-top: 20px;
+}
+
+.search-save-area > .save-search-inline {
+  margin-top: 0;
+}
+
+.save-search-inline {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.save-search-inline .check-row {
+  margin-block: 6px 0;
+}
+
+.save-search-inline > .button {
+  width: auto;
+  flex: 0 0 auto;
+}
+
+.save-search-copy .help-text,
+.saved-search-form > .help-text {
+  margin: -8px 0 14px;
+}
+
+.saved-search-drawer {
+  margin-top: 10px;
+  overflow: hidden;
+  border: 1px solid var(--participant-border);
+  border-radius: var(--participant-radius);
+  background: #fff;
+  box-shadow: var(--participant-shadow);
+}
+
+.saved-search-drawer > summary {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 18px;
+  cursor: pointer;
+  color: var(--participant-primary-dark);
+  font-weight: 700;
+  list-style: none;
+}
+
+.saved-search-drawer > summary::-webkit-details-marker {
+  display: none;
+}
+
+.saved-search-drawer > summary::after {
+  margin-left: auto;
+  content: "開く";
+  color: var(--participant-muted);
+  font-size: 0.82rem;
+}
+
+.saved-search-drawer[open] > summary::after {
+  content: "閉じる";
+}
+
+.saved-search-drawer-content {
+  padding: 0 18px 18px;
+  border-top: 1px solid var(--participant-border);
+}
+
+.saved-search-drawer .saved-search-list {
+  margin-top: 18px;
+}
+
+.saved-search-drawer .saved-search-card {
+  margin-top: 0;
+}
+
+.saved-search-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.saved-search-actions .button {
+  width: auto;
+}
+
 .history-item {
   display: grid;
   grid-template-columns: 150px minmax(0, 1fr);
@@ -629,7 +730,7 @@
   margin-top: 18px;
 }
 
-@media (max-width: 860px) {
+@media (max-width: 960px) {
   .quick-search,
   .event-detail-header,
   .history-item,
@@ -694,6 +795,16 @@
     min-height: 220px;
   }
 
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .event-meta div,
+  .detail-meta div {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
   .detail-section,
   .review-form,
   .search-panel,
@@ -706,6 +817,16 @@
   .action-row form .button,
   .quick-search .button,
   .organizer-event-card .management-actions .button {
+    width: 100%;
+  }
+
+  .save-search-inline {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .save-search-inline > .button,
+  .saved-search-actions .button {
     width: 100%;
   }
 }

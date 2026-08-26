@@ -1,4 +1,5 @@
 from datetime import date
+from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -6,6 +7,7 @@ from django.http import HttpResponseBadRequest, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 
 from events.models import Tag
+from events.services import EventService
 
 from .criteria import SearchCriteria
 from .models import SavedSearch
@@ -69,6 +71,22 @@ def _build_criteria_from(params):
         age_max=_parse_optional_int(params.get("age_max")),
         tag_ids=_parse_int_list(params.getlist("tag")),
     )
+
+
+def _criteria_query_string(criteria, selected_sort="start_asc"):
+    values = []
+    if criteria.keyword:
+        values.append(("keyword", criteria.keyword))
+    if criteria.location:
+        values.append(("location", criteria.location))
+    if criteria.period_from:
+        values.append(("period_from", criteria.period_from.isoformat()))
+    if criteria.period_to:
+        values.append(("period_to", criteria.period_to.isoformat()))
+    values.extend(("tag", str(tag_id)) for tag_id in criteria.tag_ids)
+    if selected_sort != "start_asc":
+        values.append(("sort", selected_sort))
+    return urlencode(values)
 
 
 # --- 更新系ハンドラで使う「POSTに存在しなければ既存値を維持する」共通ヘルパー群。
@@ -222,27 +240,42 @@ def search_results(request):
         if error_response is not None:
             return error_response
 
-        # Post/Redirect/Getパターンで二重送信を防ぐ。クエリ条件は保持しない単純な形にしている。
-        return redirect("search:search_results")
+        # Post/Redirect/Getで二重送信を防ぎつつ、保存・更新した検索条件を画面に残す。
+        query_string = _criteria_query_string(_build_criteria_from(request.POST))
+        redirect_url = redirect("search:search_results").url
+        if query_string:
+            redirect_url = f"{redirect_url}?{query_string}"
+        return redirect(redirect_url)
 
     criteria = _build_criteria_from(request.GET)
     selected_sort = request.GET.get("sort", "start_asc")
     if selected_sort not in SEARCH_SORT_FIELDS:
         selected_sort = "start_asc"
 
-    events = (
+    events = EventService.with_rating_summary(
         SearchService.search(criteria)
         .select_related("organizer")
         .prefetch_related("tags")
-        .order_by(*SEARCH_SORT_FIELDS[selected_sort])
-    )
+    ).order_by(*SEARCH_SORT_FIELDS[selected_sort])
 
-    saved_searches = SavedSearch.objects.none()
+    saved_searches = []
     if request.user.is_authenticated:
-        saved_searches = SavedSearch.objects.filter(
-            owner=request.user,
-            source=SavedSearch.Source.MANUAL,
+        saved_searches = list(
+            SavedSearch.objects.filter(
+                owner=request.user,
+                source=SavedSearch.Source.MANUAL,
+            ).prefetch_related("tags")
         )
+        for saved_search in saved_searches:
+            saved_search.search_query = _criteria_query_string(
+                SearchCriteria(
+                    keyword=saved_search.keyword,
+                    location=saved_search.location,
+                    period_from=saved_search.period_from,
+                    period_to=saved_search.period_to,
+                    tag_ids=[tag.pk for tag in saved_search.tags.all()],
+                )
+            )
 
     context = {
         "events": events,
@@ -250,5 +283,6 @@ def search_results(request):
         "saved_searches": saved_searches,
         "all_tags": Tag.objects.all(),
         "selected_sort": selected_sort,
+        "search_query": _criteria_query_string(criteria, selected_sort),
     }
     return render(request, "search/search_results.html", context)

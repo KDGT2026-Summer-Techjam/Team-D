@@ -1,6 +1,8 @@
+from urllib.parse import urlencode
+
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from django.db.models import Avg, Count, Q
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, render
 
 from .models import Event
@@ -15,18 +17,33 @@ EVENT_SORT_FIELDS = {
     "newest": ("-created_at", "pk"),
 }
 
+SEARCH_RETURN_PARAMETERS = (
+    "keyword",
+    "location",
+    "period_from",
+    "period_to",
+    "sort",
+    "tag",
+)
+
+
+def _search_return_query(params):
+    values = []
+    for name in SEARCH_RETURN_PARAMETERS:
+        values.extend((name, value) for value in params.getlist(name) if value)
+    return urlencode(values)
+
 
 def event_list(request):
     selected_sort = request.GET.get("sort", "start_asc")
     if selected_sort not in EVENT_SORT_FIELDS:
         selected_sort = "start_asc"
 
-    events = (
+    events = EventService.with_rating_summary(
         EventService.get_published_events()
         .select_related("organizer")
         .prefetch_related("tags")
-        .order_by(*EVENT_SORT_FIELDS[selected_sort])
-    )
+    ).order_by(*EVENT_SORT_FIELDS[selected_sort])
     return render(
         request,
         "events/event_list.html",
@@ -64,18 +81,18 @@ def event_detail(request, pk):
         "ratings": event.ratings.select_related("user"),
         "user_rating": user_rating,
         "rating_choices": range(5, -1, -1),
+        "return_query": _search_return_query(request.GET),
     }
     return render(request, "events/event_detail.html", context)
 
 @login_required
 def my_favorites(request):
-    events = (
+    events = EventService.with_rating_summary(
         EventService.get_published_events()
         .filter(favorites__user=request.user)
         .select_related("organizer")
         .prefetch_related("tags")
-        .order_by("start_datetime")
-    )
+    ).order_by("start_datetime")
     return render(request, "events/my_favorites.html", {"events": events})
 
 @login_required
@@ -97,13 +114,8 @@ def my_organized_events(request):
     if not request.user.is_organizer:
         raise PermissionDenied("このページは主催者アカウントのみ利用できます。")
 
-    events = (
+    events = EventService.with_rating_summary(
         Event.objects.filter(organizer=request.user)
         .prefetch_related("tags")
-        .annotate(
-            review_count=Count("ratings"),
-            average_rating=Avg("ratings__rating"),
-        )
-        .order_by("-start_datetime", "pk")
-    )
+    ).order_by("-start_datetime", "pk")
     return render(request, "organizer_events.html", {"events": events})
