@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.test import TestCase
+from django.urls import reverse
 from django.utils import timezone
 from datetime import timedelta
 
@@ -9,7 +10,6 @@ from .models import Favorite, Like, Rating
 from .services import InteractionService
 
 User = get_user_model()
-
 
 class InteractionServiceTests(TestCase):
     def setUp(self):
@@ -33,7 +33,6 @@ class InteractionServiceTests(TestCase):
             status=Event.Status.PUBLISH,
         )
 
-
     def test_add_favorite_success(self):
         InteractionService.add_favorite(event=self.finished_event, user=self.user)
         self.assertTrue(
@@ -56,15 +55,12 @@ class InteractionServiceTests(TestCase):
         with self.assertRaises(ValidationError):
             InteractionService.remove_favorite(event=self.finished_event, user=self.user)
 
-
     def test_add_like_duplicate_raises_error(self):
         InteractionService.add_like(event=self.finished_event, user=self.user)
         with self.assertRaises(ValidationError):
             InteractionService.add_like(event=self.finished_event, user=self.user)
 
-
     def test_submit_review_before_event_finished_raises_error(self):
-        """開催前(終了前)のイベントには評価・レビューできないこと"""
         with self.assertRaises(ValidationError):
             InteractionService.submit_review(
                 event=self.upcoming_event, user=self.user, rating=5
@@ -103,7 +99,6 @@ class InteractionServiceTests(TestCase):
         self.assertEqual(updated.rating, 5)
 
     def test_update_review_by_other_user_raises_error(self):
-        """他人のレビューは編集できないこと"""
         review = InteractionService.submit_review(
             event=self.finished_event, user=self.user, rating=3
         )
@@ -117,7 +112,6 @@ class InteractionServiceTests(TestCase):
         with self.assertRaises(PermissionError):
             InteractionService.delete_review(review=review, user=self.other_user)
 
-
     def test_get_event_stats_calculates_correctly(self):
         InteractionService.submit_review(event=self.finished_event, user=self.user, rating=4)
         InteractionService.submit_review(
@@ -128,5 +122,65 @@ class InteractionServiceTests(TestCase):
         stats = InteractionService.get_event_stats(self.finished_event)
 
         self.assertEqual(stats["review_count"], 2)
-        self.assertEqual(stats["average_rating"], 3.0)  # (4+2)/2
+        self.assertEqual(stats["average_rating"], 3.0)
         self.assertEqual(stats["favorite_count"], 1)
+
+
+class DraftCancelledEventProtectionTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="actor", password="pass")
+        self.organizer = User.objects.create_user(username="organizer3", password="pass")
+
+        self.published_event = Event.objects.create(
+            title="公開イベント",
+            organizer=self.organizer,
+            start_datetime=timezone.now() + timedelta(days=1),
+            end_datetime=timezone.now() + timedelta(days=2),
+            status=Event.Status.PUBLISH,
+        )
+        self.draft_event = Event.objects.create(
+            title="下書きイベント",
+            organizer=self.organizer,
+            start_datetime=timezone.now() + timedelta(days=1),
+            end_datetime=timezone.now() + timedelta(days=2),
+            status=Event.Status.DRAFT,
+        )
+        self.cancelled_event = Event.objects.create(
+            title="中止イベント",
+            organizer=self.organizer,
+            start_datetime=timezone.now() + timedelta(days=1),
+            end_datetime=timezone.now() + timedelta(days=2),
+            status=Event.Status.CANCEL,
+        )
+        self.client.login(username="actor", password="pass")
+
+    def test_favorite_allowed_on_published_event(self):
+        response = self.client.post(
+            reverse("interactions:toggle_favorite", kwargs={"pk": self.published_event.pk})
+        )
+        self.assertEqual(response.status_code, 302)
+
+    def test_favorite_returns_404_on_draft_event(self):
+        response = self.client.post(
+            reverse("interactions:toggle_favorite", kwargs={"pk": self.draft_event.pk})
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_favorite_returns_404_on_cancelled_event(self):
+        response = self.client.post(
+            reverse("interactions:toggle_favorite", kwargs={"pk": self.cancelled_event.pk})
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_like_returns_404_on_draft_event(self):
+        response = self.client.post(
+            reverse("interactions:toggle_like", kwargs={"pk": self.draft_event.pk})
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_review_returns_404_on_draft_event(self):
+        response = self.client.post(
+            reverse("interactions:submit_review", kwargs={"pk": self.draft_event.pk}),
+            {"rating": 5},
+        )
+        self.assertEqual(response.status_code, 404)

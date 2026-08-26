@@ -1,12 +1,12 @@
-from django.shortcuts import get_object_or_404, render
 from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, render
 
-from .models import Event
 from interactions.models import Favorite, Like
 from interactions.services import InteractionService
+from .models import Event
 from .services import EventService
 
-# Create your views here.
+
 def event_list(request):
     events = EventService.get_published_events()
     return render(request, "events/event_list.html", {"events": events})
@@ -14,6 +14,10 @@ def event_list(request):
 
 def event_detail(request, pk):
     event = get_object_or_404(EventService.get_published_events(), pk=pk)
+
+    if request.user.is_authenticated:
+        InteractionService.record_view(event=event, user=request.user)
+
     stats = InteractionService.get_event_stats(event)
 
     is_favorited = False
@@ -30,10 +34,12 @@ def event_detail(request, pk):
     }
     return render(request, "events/event_detail.html", context)
 
+
 @login_required
 def my_favorites(request):
     events = Event.objects.filter(favorites__user=request.user)
     return render(request, "events/my_favorites.html", {"events": events})
+
 
 @login_required
 def my_view_history(request):

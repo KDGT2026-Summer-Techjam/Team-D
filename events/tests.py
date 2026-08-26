@@ -1,11 +1,11 @@
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.test import TestCase
+from django.urls import reverse
 from django.utils import timezone
 from datetime import timedelta
-from django.urls import reverse
-from interactions.models import Favorite
 
+from interactions.models import Favorite, EventView
 from .models import Event
 from .services import EventService
 
@@ -33,7 +33,6 @@ class EventServiceTests(TestCase):
         defaults.update(overrides)
         return EventService.create_event(**defaults)
 
-
     def test_create_event_success(self):
         event = self._create_event()
         self.assertEqual(event.title, "テストイベント")
@@ -50,7 +49,6 @@ class EventServiceTests(TestCase):
         event = self._create_event(min_age=15, max_age=15)
         self.assertEqual(event.min_age, event.max_age)
 
-
     def test_update_event_by_organizer_success(self):
         event = self._create_event()
         updated = EventService.update_event(
@@ -65,13 +63,13 @@ class EventServiceTests(TestCase):
         )
         self.assertEqual(updated.title, "管理者による更新")
 
+
     def test_update_event_by_other_user_raises_error(self):
         event = self._create_event()
         with self.assertRaises(PermissionError):
             EventService.update_event(
                 event=event, user=self.other_user, title="不正な更新"
             )
-
 
     def test_delete_event_by_organizer_success(self):
         event = self._create_event()
@@ -84,7 +82,6 @@ class EventServiceTests(TestCase):
             EventService.delete_event(event=event, user=self.other_user)
         self.assertTrue(Event.objects.filter(pk=event.pk).exists())
 
-
     def test_published_events_excludes_draft_and_cancelled(self):
         published = self._create_event(title="公開イベント", status=Event.Status.PUBLISH)
         self._create_event(title="下書きイベント", status=Event.Status.DRAFT)
@@ -94,6 +91,7 @@ class EventServiceTests(TestCase):
 
         self.assertIn(published, result)
         self.assertEqual(result.count(), 1)
+
 
 class MyFavoritesViewTests(TestCase):
     def setUp(self):
@@ -131,3 +129,39 @@ class MyViewHistoryViewTests(TestCase):
         self.client.login(username="user1", password="pass")
         response = self.client.get(reverse("events:my_view_history"))
         self.assertEqual(response.status_code, 200)
+
+
+class EventDetailViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="viewer", password="pass")
+        self.organizer = User.objects.create_user(username="organizer2", password="pass")
+        self.event = Event.objects.create(
+            title="詳細テストイベント",
+            organizer=self.organizer,
+            start_datetime=timezone.now() + timedelta(days=1),
+            end_datetime=timezone.now() + timedelta(days=2),
+            status=Event.Status.PUBLISH,
+        )
+
+    def test_event_detail_accessible_without_login(self):
+        response = self.client.get(reverse("events:event_detail", kwargs={"pk": self.event.pk}))
+        self.assertEqual(response.status_code, 200)
+
+    def test_event_detail_does_not_record_view_when_not_logged_in(self):
+        self.client.get(reverse("events:event_detail", kwargs={"pk": self.event.pk}))
+        self.assertEqual(EventView.objects.count(), 0)
+
+    def test_event_detail_records_view_when_logged_in(self):
+        self.client.login(username="viewer", password="pass")
+        self.client.get(reverse("events:event_detail", kwargs={"pk": self.event.pk}))
+        self.assertEqual(
+            EventView.objects.filter(event=self.event, user=self.user).count(), 1
+        )
+
+    def test_my_view_history_shows_viewed_event(self):
+        self.client.login(username="viewer", password="pass")
+        self.client.get(reverse("events:event_detail", kwargs={"pk": self.event.pk}))
+
+        response = self.client.get(reverse("events:my_view_history"))
+        viewed_events = [v.event for v in response.context["views"]]
+        self.assertIn(self.event, viewed_events)
