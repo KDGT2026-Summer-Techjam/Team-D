@@ -89,15 +89,6 @@ class ParticipantUiTests(TestCase):
         # ホームへのリンクはヘッダーのロゴとメニューだけで、フッターには置かない。
         self.assertEqual(html.count('href="/"'), 2)
 
-    def test_event_list_uses_real_event_template_and_hides_drafts(self):
-        response = self.client.get(reverse("events:event_list"))
-
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "events/event_list.html")
-        self.assertContains(response, self.upcoming_event.title)
-        self.assertContains(response, self.finished_event.title)
-        self.assertNotContains(response, self.draft_event.title)
-
     def test_event_detail_records_authenticated_view(self):
         self.client.force_login(self.participant)
 
@@ -317,35 +308,14 @@ class BackNavigationTests(TestCase):
         self.assertEqual(final_response.status_code, 200)
         self.assertContains(final_response, self.event.title)
 
-    def test_back_link_from_event_list_keeps_event_list_label(self):
-        # _event_card.html の変更でevent_list経由の遷移にもnextが付与されるようになった。
-        # ラベルが「前のページに戻る」に後退しないことを確認する回帰テスト。
-        list_response = self.client.get(reverse("events:event_list"))
-        detail_url = _extract_card_detail_url(
-            list_response.content.decode(), self.event.pk
-        )
-        self.assertIsNotNone(
-            detail_url, "イベント一覧のカードにnext付きリンクが見つかりません"
-        )
-
-        detail_response = self.client.get(detail_url)
-
-        self.assertEqual(detail_response.status_code, 200)
-        self.assertEqual(
-            detail_response.context["next_url"], reverse("events:event_list")
-        )
-        self.assertEqual(detail_response.context["back_label"], "イベント一覧へ戻る")
-        self.assertContains(detail_response, "← イベント一覧へ戻る")
-        self.assertNotContains(detail_response, "前のページに戻る")
-
-    def test_event_detail_without_next_falls_back_to_event_list(self):
+    def test_event_detail_without_next_falls_back_to_home(self):
         response = self.client.get(
             reverse("events:event_detail", args=[self.event.pk])
         )
 
-        self.assertEqual(response.context["next_url"], reverse("events:event_list"))
-        self.assertEqual(response.context["back_label"], "イベント一覧へ戻る")
-        self.assertContains(response, "← イベント一覧へ戻る")
+        self.assertEqual(response.context["next_url"], reverse("core:home"))
+        self.assertEqual(response.context["back_label"], "ホームへ戻る")
+        self.assertContains(response, "← ホームへ戻る")
 
     def test_event_detail_rejects_absolute_url_next_and_falls_back(self):
         response = self.client.get(
@@ -354,8 +324,8 @@ class BackNavigationTests(TestCase):
         )
 
         self.assertNotContains(response, "evil.example.com")
-        self.assertEqual(response.context["next_url"], reverse("events:event_list"))
-        self.assertEqual(response.context["back_label"], "イベント一覧へ戻る")
+        self.assertEqual(response.context["next_url"], reverse("core:home"))
+        self.assertEqual(response.context["back_label"], "ホームへ戻る")
 
     def test_event_detail_rejects_protocol_relative_next_and_falls_back(self):
         response = self.client.get(
@@ -364,5 +334,5 @@ class BackNavigationTests(TestCase):
         )
 
         self.assertNotContains(response, "evil.example.com")
-        self.assertEqual(response.context["next_url"], reverse("events:event_list"))
-        self.assertEqual(response.context["back_label"], "イベント一覧へ戻る")
+        self.assertEqual(response.context["next_url"], reverse("core:home"))
+        self.assertEqual(response.context["back_label"], "ホームへ戻る")

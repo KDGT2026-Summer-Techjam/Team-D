@@ -13,44 +13,16 @@ from interactions.services import InteractionService
 from .services import EventService
 
 
-EVENT_SORT_FIELDS = {
-    "start_asc": ("start_datetime", "pk"),
-    "start_desc": ("-start_datetime", "pk"),
-    "newest": ("-created_at", "pk"),
-}
-
-
 def _resolve_back_navigation(request):
     """'next' を検証し、遷移先URLと戻るリンクのラベルを算出する。"""
-    next_url = get_safe_next_url(request, default="")
-    if not next_url:
-        return reverse("events:event_list"), "イベント一覧へ戻る"
+    next_url = get_safe_next_url(request, default="") or reverse("core:home")
 
     next_path = urlparse(next_url).path
     if next_path == reverse("core:home"):
         return next_url, "ホームへ戻る"
     if next_path == reverse("search:search_results"):
         return next_url, "検索結果へ戻る"
-    if next_path == reverse("events:event_list"):
-        return next_url, "イベント一覧へ戻る"
     return next_url, "前のページに戻る"
-
-
-def event_list(request):
-    selected_sort = request.GET.get("sort", "start_asc")
-    if selected_sort not in EVENT_SORT_FIELDS:
-        selected_sort = "start_asc"
-
-    events = EventService.with_rating_summary(
-        EventService.get_published_events()
-        .select_related("organizer")
-        .prefetch_related("tags")
-    ).order_by(*EVENT_SORT_FIELDS[selected_sort])
-    return render(
-        request,
-        "events/event_list.html",
-        {"events": events, "selected_sort": selected_sort},
-    )
 
 
 def event_detail(request, pk):
