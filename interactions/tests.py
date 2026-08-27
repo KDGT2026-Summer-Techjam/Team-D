@@ -8,7 +8,7 @@ from django.utils import timezone
 from datetime import timedelta
 
 from events.models import Event
-from .models import Favorite, Like, Rating
+from .models import Favorite
 from .services import InteractionService
 
 User = get_user_model()

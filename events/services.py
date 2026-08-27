@@ -1,4 +1,3 @@
-from django.core.exceptions import ValidationError
 from django.db.models import Avg, Count
 
 from .models import Event

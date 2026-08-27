@@ -12,19 +12,3 @@ def home(request):
         .prefetch_related("tags")
     ).order_by("start_datetime")[:6]
     return render(request, "core/home.html", {"featured_events": featured_events})
-
-
-def event_create(request):
-    return render(request, "core/event_form.html")
-
-
-def event_detail(request, event_id):
-    return render(request, "core/event_detail.html")
-
-
-def review_create(request, event_id):
-    return render(request, "core/review_form.html")
-
-
-def review_detail(request, review_id):
-    return render(request, "core/review_detail.html")
