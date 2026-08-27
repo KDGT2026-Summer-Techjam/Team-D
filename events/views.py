@@ -1,10 +1,12 @@
-from urllib.parse import urlencode
+from urllib.parse import urlparse
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, render
+from django.urls import reverse
 
+from core.utils import get_safe_next_url
 from .models import Event
 from interactions.models import EventView, Favorite, Like, Rating
 from interactions.services import InteractionService
@@ -17,21 +19,21 @@ EVENT_SORT_FIELDS = {
     "newest": ("-created_at", "pk"),
 }
 
-SEARCH_RETURN_PARAMETERS = (
-    "keyword",
-    "location",
-    "period_from",
-    "period_to",
-    "sort",
-    "tag",
-)
 
+def _resolve_back_navigation(request):
+    """'next' を検証し、遷移先URLと戻るリンクのラベルを算出する。"""
+    next_url = get_safe_next_url(request, default="")
+    if not next_url:
+        return reverse("events:event_list"), "イベント一覧へ戻る"
 
-def _search_return_query(params):
-    values = []
-    for name in SEARCH_RETURN_PARAMETERS:
-        values.extend((name, value) for value in params.getlist(name) if value)
-    return urlencode(values)
+    next_path = urlparse(next_url).path
+    if next_path == reverse("core:home"):
+        return next_url, "ホームへ戻る"
+    if next_path == reverse("search:search_results"):
+        return next_url, "検索結果へ戻る"
+    if next_path == reverse("events:event_list"):
+        return next_url, "イベント一覧へ戻る"
+    return next_url, "前のページに戻る"
 
 
 def event_list(request):
@@ -73,6 +75,8 @@ def event_detail(request, pk):
         user_rating = Rating.objects.filter(event=event, user=request.user).first()
         InteractionService.record_view(event=event, user=request.user)
 
+    next_url, back_label = _resolve_back_navigation(request)
+
     context = {
         "event": event,
         "stats": stats,
@@ -81,7 +85,8 @@ def event_detail(request, pk):
         "ratings": event.ratings.select_related("user"),
         "user_rating": user_rating,
         "rating_choices": range(5, -1, -1),
-        "return_query": _search_return_query(request.GET),
+        "next_url": next_url,
+        "back_label": back_label,
     }
     return render(request, "events/event_detail.html", context)
 

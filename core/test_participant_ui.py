@@ -1,3 +1,4 @@
+import re
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
@@ -248,3 +249,120 @@ class ParticipantUiTests(TestCase):
 
         self.assertContains(response, "評価 0 / 5")
         self.assertContains(response, "コメント")
+
+
+def _extract_card_detail_url(html, pk):
+    match = re.search(r'href="(/events/%d/\?next=[^"]+)"' % pk, html)
+    return match.group(1) if match else None
+
+
+def _extract_back_link_href(html):
+    match = re.search(r'class="back-link" href="([^"]+)"', html)
+    if match is None:
+        return None
+    # テンプレートのautoescapeにより '&' が '&amp;' としてレンダリングされるため、
+    # 実際のURLとして再利用するために戻す。
+    return match.group(1).replace("&amp;", "&")
+
+
+class BackNavigationTests(TestCase):
+    #サイト全体がログイン必須(LoginRequiredMiddleware)のため、各GETはログイン状態で行う。
+    @classmethod
+    def setUpTestData(cls):
+        cls.organizer = User.objects.create_user(
+            email="backnav-organizer@example.com",
+            password="test-pass-123",
+            name="主催者",
+            role=User.Role.ORGANIZER,
+        )
+        cls.participant = User.objects.create_user(
+            email="backnav-participant@example.com",
+            password="test-pass-123",
+            name="参加者",
+        )
+        now = timezone.now()
+        cls.event = Event.objects.create(
+            title="戻り導線確認イベント",
+            description="戻る導線のテスト用イベントです。",
+            organizer=cls.organizer,
+            start_datetime=now + timedelta(days=2),
+            end_datetime=now + timedelta(days=2, hours=2),
+            location="東京都",
+            status=Event.Status.PUBLISH,
+        )
+
+    def setUp(self):
+        self.client.force_login(self.participant)
+
+    def test_back_link_from_home_targets_home_with_correct_label(self):
+        home_response = self.client.get(reverse("core:home"))
+        detail_url = _extract_card_detail_url(
+            home_response.content.decode(), self.event.pk
+        )
+        self.assertIsNotNone(
+            detail_url, "ホームのイベントカードにnext付きリンクが見つかりません"
+        )
+
+        detail_response = self.client.get(detail_url)
+
+        self.assertEqual(detail_response.status_code, 200)
+        self.assertEqual(detail_response.context["next_url"], reverse("core:home"))
+        self.assertEqual(detail_response.context["back_label"], "ホームへ戻る")
+        self.assertContains(detail_response, "← ホームへ戻る")
+
+        back_href = _extract_back_link_href(detail_response.content.decode())
+        self.assertEqual(back_href, reverse("core:home"))
+
+        final_response = self.client.get(back_href)
+        self.assertEqual(final_response.status_code, 200)
+        self.assertContains(final_response, self.event.title)
+
+    def test_back_link_from_event_list_keeps_event_list_label(self):
+        # _event_card.html の変更でevent_list経由の遷移にもnextが付与されるようになった。
+        # ラベルが「前のページに戻る」に後退しないことを確認する回帰テスト。
+        list_response = self.client.get(reverse("events:event_list"))
+        detail_url = _extract_card_detail_url(
+            list_response.content.decode(), self.event.pk
+        )
+        self.assertIsNotNone(
+            detail_url, "イベント一覧のカードにnext付きリンクが見つかりません"
+        )
+
+        detail_response = self.client.get(detail_url)
+
+        self.assertEqual(detail_response.status_code, 200)
+        self.assertEqual(
+            detail_response.context["next_url"], reverse("events:event_list")
+        )
+        self.assertEqual(detail_response.context["back_label"], "イベント一覧へ戻る")
+        self.assertContains(detail_response, "← イベント一覧へ戻る")
+        self.assertNotContains(detail_response, "前のページに戻る")
+
+    def test_event_detail_without_next_falls_back_to_event_list(self):
+        response = self.client.get(
+            reverse("events:event_detail", args=[self.event.pk])
+        )
+
+        self.assertEqual(response.context["next_url"], reverse("events:event_list"))
+        self.assertEqual(response.context["back_label"], "イベント一覧へ戻る")
+        self.assertContains(response, "← イベント一覧へ戻る")
+
+    def test_event_detail_rejects_absolute_url_next_and_falls_back(self):
+        response = self.client.get(
+            reverse("events:event_detail", args=[self.event.pk]),
+            {"next": "https://evil.example.com/"},
+        )
+
+        self.assertNotContains(response, "evil.example.com")
+        self.assertEqual(response.context["next_url"], reverse("events:event_list"))
+        self.assertEqual(response.context["back_label"], "イベント一覧へ戻る")
+
+    def test_event_detail_rejects_protocol_relative_next_and_falls_back(self):
+        response = self.client.get(
+            reverse("events:event_detail", args=[self.event.pk]),
+            {"next": "//evil.example.com"},
+        )
+
+        self.assertNotContains(response, "evil.example.com")
+        self.assertEqual(response.context["next_url"], reverse("events:event_list"))
+        self.assertEqual(response.context["back_label"], "イベント一覧へ戻る")

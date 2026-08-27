@@ -1,9 +1,13 @@
+from urllib.parse import urlencode
+
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 
+from core.utils import get_safe_next_url
 from events.models import Event
 from .models import Favorite, Like, Rating
 from .services import InteractionService
@@ -11,6 +15,14 @@ from .services import InteractionService
 
 def _validation_message(error):
     return " ".join(error.messages)
+
+
+def _redirect_to_event_detail(request, pk):
+    url = reverse("events:event_detail", kwargs={"pk": pk})
+    next_url = get_safe_next_url(request, default="")
+    if next_url:
+        url = f"{url}?{urlencode({'next': next_url})}"
+    return redirect(url)
 
 
 @login_required
@@ -26,7 +38,7 @@ def toggle_favorite(request, pk):
             messages.success(request, "お気に入りに追加しました。")
     except ValidationError as error:
         messages.error(request, _validation_message(error))
-    return redirect("events:event_detail", pk=pk)
+    return _redirect_to_event_detail(request, pk)
 
 
 @login_required
@@ -42,7 +54,7 @@ def toggle_like(request, pk):
             messages.success(request, "イベントにいいねしました。")
     except ValidationError as error:
         messages.error(request, _validation_message(error))
-    return redirect("events:event_detail", pk=pk)
+    return _redirect_to_event_detail(request, pk)
 
 
 @login_required
@@ -60,7 +72,7 @@ def submit_review(request, pk):
     except ValidationError as error:
         messages.error(request, _validation_message(error))
 
-    return redirect("events:event_detail", pk=pk)
+    return _redirect_to_event_detail(request, pk)
 
 
 @login_required
@@ -82,7 +94,7 @@ def update_rating(request, pk, rating_id):
     except PermissionError as error:
         messages.error(request, str(error))
 
-    return redirect("events:event_detail", pk=pk)
+    return _redirect_to_event_detail(request, pk)
 
 
 @login_required
@@ -97,4 +109,4 @@ def delete_rating(request, pk, rating_id):
     except PermissionError as error:
         messages.error(request, str(error))
 
-    return redirect("events:event_detail", pk=pk)
+    return _redirect_to_event_detail(request, pk)

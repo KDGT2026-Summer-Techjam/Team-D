@@ -9,11 +9,7 @@
 
 {% block content %}
 <article class="participant-page event-detail">
-  {% if return_query %}
-    <a class="back-link" href="{% url 'search:search_results' %}?{{ return_query }}">← 検索結果へ戻る</a>
-  {% else %}
-    <a class="back-link" href="{% url 'events:event_list' %}">← イベント一覧へ戻る</a>
-  {% endif %}
+  <a class="back-link" href="{{ next_url }}">← {{ back_label }}</a>
 
   <header class="event-detail-header">
     <div class="event-detail-image">
@@ -84,12 +80,14 @@
       <div class="action-row">
         <form method="post" action="{% url 'interactions:toggle_favorite' event.pk %}">
           {% csrf_token %}
+          <input type="hidden" name="next" value="{{ next_url }}">
           <button class="button {% if is_favorited %}button-active{% else %}button-secondary{% endif %}" type="submit">
             {% if is_favorited %}お気に入り解除{% else %}お気に入りに追加{% endif %}
           </button>
         </form>
         <form method="post" action="{% url 'interactions:toggle_like' event.pk %}">
           {% csrf_token %}
+          <input type="hidden" name="next" value="{{ next_url }}">
           <button class="button {% if is_liked %}button-active{% else %}button-secondary{% endif %}" type="submit">
             {% if is_liked %}いいねを取り消す{% else %}いいね{% endif %}
           </button>
@@ -108,6 +106,7 @@
         {% if user_rating %}
           <form class="review-form" method="post" action="{% url 'interactions:update_rating' event.pk user_rating.pk %}">
             {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next_url }}">
             <h3>自分の評価を編集</h3>
             <div class="field-group">
               <label for="my-rating">評価（0〜5）</label>
@@ -125,11 +124,13 @@
           </form>
           <form class="delete-form" method="post" action="{% url 'interactions:delete_rating' event.pk user_rating.pk %}">
             {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next_url }}">
             <button class="button button-danger" type="submit">自分の評価を削除</button>
           </form>
         {% else %}
           <form class="review-form" method="post" action="{% url 'interactions:submit_review' event.pk %}">
             {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next_url }}">
             <h3>評価を投稿</h3>
             <div class="field-group">
               <label for="new-rating">評価（0〜5）</label>

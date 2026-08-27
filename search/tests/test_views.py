@@ -1,7 +1,12 @@
+import re
+from datetime import timedelta
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
+from events.models import Event
 from search.models import SavedSearch
 from search.services import SavedSearchService
 
@@ -272,3 +277,86 @@ class PreferenceSavedSearchVisibilityTests(TestCase):
         self.assertEqual(response.status_code, 404)
         preference.refresh_from_db()
         self.assertEqual(preference.location, "東京都")
+
+
+class SearchBackNavigationRoundTripTests(TestCase):
+    #検索結果 -> 詳細 -> 戻るリンクを実際にたどり、同じ検索結果に戻れることを検証する。
+    #サイト全体がログイン必須(LoginRequiredMiddleware)のため、ログイン状態でGETする。
+    @classmethod
+    def setUpTestData(cls):
+        cls.organizer = User.objects.create_user(
+            email="search-backnav-organizer@example.com", password="pass12345"
+        )
+        cls.viewer = User.objects.create_user(
+            email="search-backnav-viewer@example.com", password="pass12345"
+        )
+        now = timezone.now()
+        cls.matching_event = Event.objects.create(
+            title="親子 イベント 夏祭り",
+            organizer=cls.organizer,
+            start_datetime=now + timedelta(days=1),
+            end_datetime=now + timedelta(days=1, hours=2),
+            location="大阪市",
+            status=Event.Status.PUBLISH,
+        )
+        cls.other_event = Event.objects.create(
+            title="スポーツ大会",
+            organizer=cls.organizer,
+            start_datetime=now + timedelta(days=2),
+            end_datetime=now + timedelta(days=2, hours=2),
+            location="東京都",
+            status=Event.Status.PUBLISH,
+        )
+
+    def setUp(self):
+        self.client.force_login(self.viewer)
+
+    def test_following_back_link_returns_to_same_search_results(self):
+        # 非ASCII + スペース + 2パラメータ以上のクエリでエンコードの往復を検証する。
+        query_params = {"keyword": "親子 イベント", "sort": "newest"}
+
+        search_response = self.client.get(
+            reverse("search:search_results"), query_params
+        )
+        self.assertEqual(search_response.status_code, 200)
+        self.assertContains(search_response, self.matching_event.title)
+        self.assertNotContains(search_response, self.other_event.title)
+
+        html = search_response.content.decode()
+        match = re.search(
+            r'href="(/events/%d/\?next=[^"]+)"' % self.matching_event.pk, html
+        )
+        self.assertIsNotNone(
+            match, "検索結果のイベントカードにnext付きリンクが見つかりません"
+        )
+        detail_url = match.group(1)
+
+        detail_response = self.client.get(detail_url)
+        self.assertEqual(detail_response.status_code, 200)
+        self.assertContains(detail_response, "← 検索結果へ戻る")
+
+        back_match = re.search(
+            r'class="back-link" href="([^"]+)"', detail_response.content.decode()
+        )
+        self.assertIsNotNone(back_match)
+        back_href = back_match.group(1).replace("&amp;", "&")
+
+        followed_response = self.client.get(back_href)
+
+        self.assertEqual(followed_response.status_code, 200)
+        # 文字列一致だけで終わらせず、実際に返ってきた結果集合・contextが
+        # 元の検索結果と一致することを確認する。
+        self.assertEqual(
+            list(followed_response.context["events"]),
+            list(search_response.context["events"]),
+        )
+        self.assertEqual(
+            followed_response.context["criteria"].keyword,
+            search_response.context["criteria"].keyword,
+        )
+        self.assertEqual(
+            followed_response.context["selected_sort"],
+            search_response.context["selected_sort"],
+        )
+        self.assertContains(followed_response, self.matching_event.title)
+        self.assertNotContains(followed_response, self.other_event.title)

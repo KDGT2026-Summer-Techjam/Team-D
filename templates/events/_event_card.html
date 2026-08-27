@@ -1,6 +1,6 @@
 {% url 'events:event_detail' event.pk as event_detail_url %}
 <article class="event-card">
-  <a class="event-card-image" href="{{ event_detail_url }}{% if return_query %}?{{ return_query }}{% endif %}" aria-label="{{ event.title }}の詳細を見る">
+  <a class="event-card-image" href="{{ event_detail_url }}?next={{ request.get_full_path|urlencode }}" aria-label="{{ event.title }}の詳細を見る">
     {% if event.image %}
       <img src="{{ event.image.url }}" alt="{{ event.title }}">
     {% else %}
@@ -15,7 +15,7 @@
         <span class="tag tag-muted">タグなし</span>
       {% endfor %}
     </div>
-    <h3><a href="{{ event_detail_url }}{% if return_query %}?{{ return_query }}{% endif %}">{{ event.title }}</a></h3>
+    <h3><a href="{{ event_detail_url }}?next={{ request.get_full_path|urlencode }}">{{ event.title }}</a></h3>
     <dl class="event-meta">
       <div>
         <dt>日時</dt>
@@ -37,6 +37,6 @@
       </div>
     {% endif %}
     <p class="event-summary">{{ event.description|default:"イベントの説明はありません。"|truncatechars:90 }}</p>
-    <a class="button button-secondary" href="{{ event_detail_url }}{% if return_query %}?{{ return_query }}{% endif %}">詳細を見る</a>
+    <a class="button button-secondary" href="{{ event_detail_url }}?next={{ request.get_full_path|urlencode }}">詳細を見る</a>
   </div>
 </article>

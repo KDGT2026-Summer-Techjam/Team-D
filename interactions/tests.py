@@ -1,6 +1,9 @@
+import re
+
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.test import TestCase
+from django.urls import reverse
 from django.utils import timezone
 from datetime import timedelta
 
@@ -130,3 +133,71 @@ class InteractionServiceTests(TestCase):
         self.assertEqual(stats["review_count"], 2)
         self.assertEqual(stats["average_rating"], 3.0)  # (4+2)/2
         self.assertEqual(stats["favorite_count"], 1)
+
+
+class RedirectNextParameterTests(TestCase):
+    #POSTアクション後のリダイレクトが 'next' を正しく引き継ぐ・拒否することを検証する。
+    def setUp(self):
+        self.organizer = User.objects.create_user(
+            email="redirect-organizer@example.com", password="pass12345"
+        )
+        self.user = User.objects.create_user(
+            email="redirect-user@example.com", password="pass12345"
+        )
+        self.event = Event.objects.create(
+            title="リダイレクト確認イベント",
+            organizer=self.organizer,
+            start_datetime=timezone.now() - timedelta(days=2),
+            end_datetime=timezone.now() - timedelta(days=1),
+            status=Event.Status.PUBLISH,
+        )
+        self.client.force_login(self.user)
+        self.favorite_url = reverse("interactions:toggle_favorite", args=[self.event.pk])
+        self.detail_url = reverse("events:event_detail", args=[self.event.pk])
+
+    def test_toggle_favorite_without_next_redirects_to_plain_detail_url(self):
+        response = self.client.post(self.favorite_url)
+
+        self.assertRedirects(response, self.detail_url)
+
+    def test_toggle_favorite_rejects_absolute_hostile_next(self):
+        response = self.client.post(
+            self.favorite_url, {"next": "https://evil.example.com/"}
+        )
+
+        self.assertRedirects(response, self.detail_url)
+        self.assertNotIn("evil.example.com", response["Location"])
+
+    def test_toggle_favorite_rejects_protocol_relative_hostile_next(self):
+        response = self.client.post(
+            self.favorite_url, {"next": "//evil.example.com"}
+        )
+
+        self.assertRedirects(response, self.detail_url)
+        self.assertNotIn("evil.example.com", response["Location"])
+
+    def test_toggle_favorite_round_trips_next_across_two_hops(self):
+        target_next = "/search/?keyword=花火&sort=newest"
+
+        response = self.client.post(self.favorite_url, {"next": target_next})
+
+        self.assertEqual(response.status_code, 302)
+        location = response["Location"]
+        self.assertTrue(location.startswith(self.detail_url + "?next="))
+
+        # 1ホップ目: リダイレクト先の詳細ページを実際にGETする。
+        detail_response = self.client.get(location)
+        self.assertEqual(detail_response.status_code, 200)
+        self.assertEqual(detail_response.context["next_url"], target_next)
+        self.assertContains(detail_response, "← 検索結果へ戻る")
+
+        back_match = re.search(
+            r'class="back-link" href="([^"]+)"', detail_response.content.decode()
+        )
+        self.assertIsNotNone(back_match)
+        back_href = back_match.group(1).replace("&amp;", "&")
+        self.assertEqual(back_href, target_next)
+
+        # 2ホップ目: 詳細ページ自身の戻りリンクが壊れていないことを確認する。
+        search_response = self.client.get(back_href)
+        self.assertEqual(search_response.status_code, 200)
